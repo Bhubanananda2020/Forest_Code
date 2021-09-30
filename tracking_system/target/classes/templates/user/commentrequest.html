@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+<head>
+<meta charset="UTF-8" />
+<title th:text="${title}"></title>
+</head>
+<body>
+
+	<section>
+		<div class="container d-flex justify-content-center ">
+			<div class="row  d-flex justify-content-center">
+				<div class="col-12  d-flex justify-content-center">
+					<div class="card" style="width: 39rem;">
+						<div class="card-header">
+							<h1 class="card-title d-flex justify-content-center">Comment
+								request</h1>
+						</div>
+
+						<form class="main mt-3 mb-3"
+							th:action="@{/home/updaterequestcomment}"
+							th:object="${requestEntity}" method="post">
+							<div class='main '>
+								<div class="row ml-2">
+
+									<div class="col-sm-11 input-group form-group">
+									<input th:value="${requestEntity.reqid}" type="hidden" id="reqid"
+										name="reqid" class="form-control"> <input
+										th:value="${requestEntity.reqcode}" type="text" id="reqcode"
+										name="reqcode" th:field="*{reqcode}" class="form-control">
+</div>
+
+<div style="display: none">
+									<div class="col-sm-11 input-group form-group">
+										<div class="input-group-prepend">
+											<span class="input-group-text" style="height: 40px"><i
+												class="fas fa-file-alt"></i></span>
+										</div>
+										<input type="text" class="form-control" id="reqtitle"
+											placeholder="Enter Request Title" name="reqtitle"
+											th:field="*{reqtitle}" required="required"> <br>
+									</div>
+									<p th:if="${#fields.hasErrors('reqtitle')}"
+										th:errors="*{reqtitle}" class="alert alert-danger"></p>
+</div>
+
+
+
+
+<div style="display: none">
+									<div class="col-sm-11 input-group form-group">
+										<div class="input-group-prepend">
+											<span class="input-group-text" style="height: 40px"><i
+												class="fas fa-file-alt"></i></span>
+										</div>
+										<input type="text" class="form-control" id="reqdesc"
+											placeholder="Enter Request Description" name="reqdesc"
+											th:field="*{reqdesc}" required="required"> <br>
+									</div>
+									<p th:if="${#fields.hasErrors('reqdesc')}"
+										th:errors="*{reqdesc}" class="alert alert-danger"></p>
+</div>
+<div style="display: none">
+									<div class="col-sm-11 input-group form-group">
+										<div class="input-group-prepend">
+											<span class="input-group-text" style="height: 40px"><i
+												class="fas fa-user"></i></span>
+										</div>
+
+										<select class="form-control"
+											aria-label="Default select example" name="reqdeptcode"
+											id="reqdeptcode" onchange="search()">
+											<option th:text="*{reqdeptcode}"></option>
+											<option th:value="${DeptCode}"
+												th:each="DeptCode : ${deptCodeList}" th:text="${DeptCode}" />
+										</select>
+										<div class="input-group-prepend  ml-3">
+											<span class="input-group-text" style="height: 40px"><i
+												class="fas fa-user"></i></span>
+										</div>
+										<select class="form-control"
+											aria-label="Default select example" name="reqassignto"
+											id="reqassignto">
+											<option th:text="*{reqassignto}"></option>
+										</select>
+									</div>
+									<p th:if="${#fields.hasErrors('reqdeptcode')}"
+										th:errors="*{reqdeptcode}" class="alert alert-danger"></p>
+</div>
+									<div class="col-sm-11 input-group form-group">
+										<div class="input-group-prepend">
+											<span class="input-group-text" style="height: 40px"><i
+												class="fas fa-user"></i></span>
+										</div>
+										<select class="form-control"
+											aria-label="Default select example" name="sestdesc"
+											id="sestdesc">
+											<option>NEW REQUEST</option>
+											<option>PROGRESS REQUEST</option>
+											<option>CLOSE REQUEST</option>
+										</select>
+									</div>
+
+
+									<div class="form-group  ml-3">
+										<textarea rows="3" cols="72" class="form-control"
+											placeholder="Comments on above Request" name="reqinicomment"
+											id="reqinicomment" ></textarea>
+									</div>
+
+									<p th:if="${#fields.hasErrors('reqinicomment')}"
+										th:errors="*{reqinicomment}" class="alert alert-danger"></p>
+
+									<div class="col-sm-11 text-center">
+										<button class="btn btn-outline-primary float-left "
+											type="submit" style="width: 45%">UPDATE REQUEST</button>
+										<button class="btn btn-outline-secondary float-right"
+											type="reset" style="width: 45%">RESET</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</section>
+
+
+
+</body>
+</html>

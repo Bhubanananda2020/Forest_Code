@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+<head>
+<meta charset="UTF-8" />
+<title th:text="${title}"></title>
+</head>
+<body>
+	<section>
+
+
+		<div class="container">
+
+			<div class="card">
+
+				<div class="card-body">
+
+					<div class="text-center">
+						<img style="height: 175px; width: 200px" class="my_profile" src="" />
+
+					</div>
+					<table class="table ml-2 mr-2">
+						<thead>
+						</thead>
+						<tbody>
+							<tr>
+								<th scope="row">Name</th>
+								<td><span th:text="${ue.uFName}+ ' ' + ${ue.uLName} "></span></td>
+							</tr>
+							<tr>
+								<th scope="row">Email</th>
+								<th scope="col"><span th:text="${ue.uEmail}"></span></th>
+							</tr>
+							<tr>
+								<th scope="row">Username</th>
+								<th scope="col"><span th:text="${ue.uName}"></span></th>
+							</tr>
+							<tr>
+								<th scope="row">User Role</th>
+								<th scope="col"><span th:text="${session.isUserAdmin}"></span></th>
+							</tr>
+							<tr>
+								<th scope="row">Account Status</th>
+								<th scope="col"><span th:text="${ue.uIsActive}"></span></th>
+							</tr>
+							<tr>
+								<th scope="row">Create By</th>
+								<th scope="col"><span th:text="${ue.uCBy}"></span></th>
+							</tr>
+							<tr>
+								<th scope="row">Create Date</th>
+								<th scope="col"><span th:text="${ue.uCDate}"></span></th>
+							</tr>
+						</tbody>
+					</table>
+
+				</div>
+			</div>
+
+
+
+		</div>
+	</section>
+
+
+
+</body>
+</html>

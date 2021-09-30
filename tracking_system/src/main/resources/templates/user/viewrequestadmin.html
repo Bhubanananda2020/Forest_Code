@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+<head>
+<meta charset="UTF-8" />
+
+
+</head>
+<body>
+	<section>
+
+
+<!-- 		<div>
+			<a th:href="@{/home/user/viewrequest/export/pdf}">Raise Request</a>
+		</div>
+		<div>
+			<a th:href="@{/home/user/viewrequest/export1/pdf}">Assigned
+				Request </a>
+		</div>
+		<div>
+			<a th:href="@{/home/user/viewrequest/export2/pdf}">Closed Request
+			</a>
+		</div>
+ -->
+
+		<div class="card mr-3 ml-3" id="shadow" style="width: 100%;">
+			<div class="card-header">
+				<a class="btn btn-outline-primary text-center " type="reset"
+					id="myBtn1"
+					style="width: 24%; background-color: blue; color: white;"
+					onclick="myFunction1()">My Request View </a> <a
+					class="btn btn-outline-primary text-center " type="reset"
+					id="myBtn2" onclick="myFunction2()" style="width: 24%">Assigned
+					Request</a> <a class="btn btn-outline-primary text-center "
+					type="reset" id="myBtn3" onclick="myFunction3()" style="width: 24%">Closed
+					Request</a>
+			</div>
+
+			<div class="card-body" id="bd01">
+				<div class="table-responsive-md">
+					<table id="arisedreq" class="display" style="width: 100%;">
+						<thead>
+							<tr class="text-uppercase">
+								<th scope="col">Request Number</th>
+								<th scope="col">Create By</th>
+								<th scope="col">Request Title</th>
+								<th scope="col">Status</th>
+								<th scope="col">Dept Name</th>
+								<th scope="col">Assigned_to</th>
+								<th scope="col">Last_Updated_Date</th>
+								<th scope="col">severity</th>
+								<th scope="col">Priority</th>
+								<th scope="col">Request Age</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="arra : ${allraisestatusadmin}">
+								<td scope="row"><a th:href="@{'/home/'+${arra.getReqcode()}+'/getrequestbycode'}">
+										<span th:text="${arra.getReqcode()}"></span>
+								</a></td>
+								<td scope="row" th:text="${arra.getCreatedBy()}">Request
+									Create By</td>
+								<td scope="row" th:text="${arra.getReqtitle()}">Request
+									Title</td>
+								<td scope="row" th:text="${arra.getStatus_desc() }">Status</td>
+								<td scope="row" th:text="${arra.getDeptname() }">Dept_Name</td>
+								<td scope="row" th:value="${arra.getReqassignto()}"
+									th:text="${arra.getFirstname()}">Assigned_to</td>
+								<td scope="row" th:text="${arra.getDate()}">Last_Updated_Date</td>
+								<td scope="row" th:text="${arra.getSeverity1()}">severity</td>
+								<td scope="row" th:text="${arra.getPiority1()}">Priority</td>
+
+								<td scope="row" th:text="${arra.getAge()}">Request Age</td>
+
+							</tr>
+						</tbody>
+					</table>
+
+
+					<div class="modal fade" id="exampleModal" tabindex="-1"
+						aria-labelledby="exampleModalLabel" aria-hidden="true">
+						<div class="modal-dialog">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h5 class="modal-title" id="exampleModalLabel">Request
+										History</h5>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"
+										aria-label="Close"></button>
+								</div>
+								<div class="modal-body">
+
+
+									<form class="main mt-3 mb-3" th:action="@{/home/updaterequest}"
+										method="post">
+										<div class='main '>
+											<div class="row ml-2">
+												<input type="text" id="reqid" name="reqid"
+													class="form-control"> <input type="text"
+													id="reqcode" name="reqcode" class="form-control">
+											</div>
+										</div>
+									</form>
+
+
+
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn btn-secondary"
+										data-bs-dismiss="modal">Close</button>
+									<button type="button" class="btn btn-primary">Save
+										changes</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+
+
+				</div>
+			</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			<div class="card-body" id="bd02" style="display: none">
+				<div class="table-responsive-md">
+					<table id="assignreq" class="display" style="width: 100%;">
+						<thead>
+							<tr class="text-uppercase">
+								<th scope="col">Request Number</th>
+								<th scope="col">Create By</th>
+								<th scope="col">Request Title</th>
+								<th scope="col">Status</th>
+								<th scope="col">Dept Name</th>
+								<th scope="col">Assigned_to</th>
+								<th scope="col">Last_Updated_Date</th>
+								<th scope="col">severity</th>
+								<th scope="col">Priority</th>
+								<th scope="col">Request Age</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="asa : ${allassignstatusadmin}">
+								<td scope="row"><a th:href="@{'/home/'+${asa.getReqcode()}+'/getrequestbycode'}">
+										<span th:text="${asa.getReqcode()}"></span>
+								</a></td>
+								<td scope="row" th:text="${asa.getCreatedBy()}">Request Create By</td>
+								<td scope="row" th:text="${asa.getReqtitle()}">Request Title</td>
+								<td scope="row" th:text="${asa.getStatus_desc() }">Status</td>
+								<td scope="row" th:text="${asa.getDeptname() }">Dept_Name</td>
+								<td scope="row" th:value="${asa.getReqassignto()}" th:text="${asa.getFirstname()}">Assigned_to</td>
+								<td scope="row" th:text="${asa.getDate()}">Last_Updated_Date</td>
+								<td scope="row" th:text="${asa.getSeverity1()}">severity</td>
+								<td scope="row" th:text="${asa.getPiority1()}">Priority</td>
+								<td scope="row" th:text="${asa.getAge()}">Request Age</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+
+
+			<div class="card-body" id="bd03" style="display: none">
+				<div class="table-responsive-md">
+					<table id="closereq" class="display" style="width: 100%;">
+						<thead>
+							<tr class="text-uppercase">
+								<th scope="col">Request Number</th>
+								<th scope="col">Create By</th>
+								<th scope="col">Request Title</th>
+								<th scope="col">Status</th>
+								<th scope="col">Dept Name</th>
+								<th scope="col">Assigned_to</th>
+								<th scope="col">Last_Updated_Date</th>
+								<th scope="col">severity</th>
+								<th scope="col">Priority</th>
+								<th scope="col">Request Age</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="arca : ${allarriseclosedstatusadmin}">
+								<td scope="row"><a
+									th:href="@{'/home/'+${arca.getReqcode()}+'/getrequestbycode'}">
+										<span th:text="${arca.getReqcode()}"></span>
+								</a></td>
+								<td scope="row" th:text="${arca.getCreatedBy()}">Create By</td>
+								<td scope="row" th:text="${arca.getReqtitle()}">Request
+									Title</td>
+								<td scope="row" th:text="${arca.getStatus_desc() }">Status</td>
+								<td scope="row" th:text="${arca.getDeptname() }">Dept_Name</td>
+								
+								<td scope="row" th:value="${arca.getReqassignto()}"
+									th:text="${arca.getFirstname()}">Assigned_to</td>
+								<td scope="row" th:text="${arca.getDate()}">Last_Updated_Date</td>
+								<td scope="row" th:text="${arca.getSeverity1()}">severity</td>
+								<td scope="row" th:text="${arca.getPiority1()}">Priority</td>
+								<td scope="row" th:text="${arca.getAge()}">Request Age</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+
+
+
+		</div>
+
+
+
+
+		<script type="text/javascript">
+			function myFunction1() {
+				var x1 = document.getElementById("bd01");
+				var x2 = document.getElementById("bd02");
+				var x3 = document.getElementById("bd03");
+
+				document.getElementById('myBtn1').style.backgroundColor = 'blue';
+				document.getElementById('myBtn1').style.color = 'White';
+				document.getElementById('myBtn2').style.backgroundColor = '';
+				document.getElementById('myBtn2').style.color = '';
+				document.getElementById('myBtn3').style.backgroundColor = '';
+				document.getElementById('myBtn3').style.color = '';
+
+				x1.style.display = "block";
+				x2.style.display = "none";
+				x3.style.display = "none";
+			}
+			function myFunction2() {
+				var x1 = document.getElementById("bd01");
+				var x2 = document.getElementById("bd02");
+				var x3 = document.getElementById("bd03");
+
+				document.getElementById('myBtn1').style.backgroundColor = '';
+				document.getElementById('myBtn1').style.color = '';
+				document.getElementById('myBtn2').style.backgroundColor = 'blue';
+				document.getElementById('myBtn2').style.color = 'White';
+				document.getElementById('myBtn3').style.backgroundColor = '';
+				document.getElementById('myBtn3').style.color = '';
+
+				x1.style.display = "none";
+				x2.style.display = "block";
+				x3.style.display = "none";
+			}
+			function myFunction3() {
+				var x1 = document.getElementById("bd01");
+				var x2 = document.getElementById("bd02");
+				var x3 = document.getElementById("bd03");
+
+				document.getElementById('myBtn1').style.backgroundColor = '';
+				document.getElementById('myBtn1').style.color = '';
+				document.getElementById('myBtn2').style.backgroundColor = '';
+				document.getElementById('myBtn2').style.color = '';
+				document.getElementById('myBtn3').style.backgroundColor = 'blue';
+				document.getElementById('myBtn3').style.color = 'White';
+
+				x1.style.display = "none";
+				x2.style.display = "none";
+				x3.style.display = "block";
+			}
+		</script>
+	</section>
+</body>
+</html>

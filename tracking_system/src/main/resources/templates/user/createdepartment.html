@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+<head>
+<meta charset="UTF-8" />
+<title th:text="${title}"></title>
+</head>
+<body>
+
+	<section>
+		<div class="container d-flex justify-content-center ">
+			<div class="row  d-flex justify-content-center">
+				<div class="col-12  d-flex justify-content-center">
+					<div class="card" style="width: 39rem;" id="shadow">
+						<div class="card-header">
+							<h1 class="card-title d-flex justify-content-center">Create
+								Department</h1>
+						</div>
+						<div class="card-body justify-content-center">
+							<form class="main" th:action="@{/home/savedeptprocess}"
+								th:object="${deptEntity}" method="post">
+
+								<div class="input-group form-floating mb-2">
+									<span class="input-group-text"><i
+										class="fas fa-building"></i></span> <input type="text"
+										class="form-control" aria-label="decode"
+										aria-describedby="basic-addon1" id="decode" name="decode"
+										th:field="*{decode}" autocomplete="off"
+										oninput="deptcodefiledvalidation()"
+										onchange="checkdepartment()" required="required"> <label
+										style="margin-left: 2.2rem;" for="floatingInput">Department
+										Code</label>
+								</div>
+								<p th:if="${#fields.hasErrors('decode')}" th:errors="*{decode}"
+									class="alert alert-danger"></p>
+								<span id="decodeef" style="color: red"></span> <span
+									id="decodeef1" style="color: red"></span>
+
+
+
+								<div class="input-group form-floating mb-2">
+									<span class="input-group-text"><i
+										class="fas fa-building"></i></span> <input type="text"
+										class="form-control" aria-label="dename"
+										aria-describedby="basic-addon1" id="dename" name="dename"
+										th:field="*{dename}" autocomplete="off"
+										oninput="deptnamefiledvalidation()" required="required">
+									<label style="margin-left: 2.2rem;" for="floatingInput">Department
+										Name</label>
+								</div>
+								<p th:if="${#fields.hasErrors('dename')}" th:errors="*{dename}"
+									class="alert alert-danger"></p>
+								<span id="denameef" style="color: red"></span> <span
+									id="denameef1" style="color: red"></span>
+
+
+								<div class="input-group form-floating mb-2">
+									<span class="input-group-text"><i
+										class="fas fa-building"></i></span> <select class="form-select"
+										aria-label="Default select example" name="depcode"
+										id="depcode">
+										<option th:value="${session.depcode}"
+													th:text="${session.depcode}"></option>
+													
+										<!-- <option th:value="${depcode}"
+											th:each="depcode : ${ParentCodeList}" th:text="${depcode}"
+											style="width: 400px" /> -->
+									</select> <label style="margin-left: 2.2rem;" for="floatingInput">Select
+										Department</label>
+									<p th:if="${#fields.hasErrors('depcode')}"
+										th:errors="*{depcode}" class="alert alert-danger"></p>
+									<span id="depcodeef" style="color: red"></span>
+								</div>
+
+<!-- 								<div class="input-group form-floating mb-2">
+									<span class="input-group-text"><i
+										class="fas fa-building"></i></span> <input type="text"
+										class="form-control" aria-label="dename"
+										aria-describedby="basic-addon1" list="browsers" name="depcode"
+										id="reqdeptcode" th:field="*{depcode}" autocomplete="off"
+										required="required"> <label
+										style="margin-left: 2.2rem;" for="floatingInput">Parent
+										Department Code</label>
+									<datalist id="browsers">
+										<option th:value="${DeptPCode}"
+											th:each="DeptPCode : ${ParentCodeList}"
+											th:text="${DeptPCode}" style="width: 400px" />
+									</datalist>
+								</div>
+								<p th:if="${#fields.hasErrors('depcode')}"
+									th:errors="*{depcode}" class="alert alert-danger"></p>
+								<span id="depcodeef" style="color: red"></span>
+
+
+
+ -->
+
+
+
+
+
+
+
+
+								<div class="input-group form-floating mb-2">
+									<span class="input-group-text"><i
+										class="fas fa-exclamation"></i></span> <select class="form-select"
+										name="deisactive" id="deisactive"
+										aria-label="Floating label select example">
+										<option value="true">Active</option>
+										<option value="false">Inactive</option>
+									</select> <label for="floatingSelect" style="margin-left: 2.2rem;">Status</label>
+								</div>
+
+
+
+
+
+
+
+
+
+
+
+								<div class="col-sm-11 text-center">
+									<button class="btn btn-outline-primary float-left "
+										id="savedept" type="submit" style="width: 45%">Save
+										Department</button>
+									<a class="btn btn-outline-secondary float-right" type="reset"
+										style="width: 45%" th:href="@{/home/user/createdepartment}">RESET</a>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+			function deptcodefiledvalidation() {
+				var decode = document.getElementById("decode").value;
+	
+				if (decode.trim() == "") {
+					document.getElementById("decodeef").innerHTML = "<b>Please enter department code !!!</b>";
+					document.getElementById("savedept").disabled = true;
+				} else if (decode.trim().length != 6) {
+					document.getElementById("decodeef").innerHTML = "<b>Department length must be 6 characters !!!</b>";
+					document.getElementById("savedept").disabled = true;
+				} else {
+					document.getElementById("decodeef").innerHTML = "";
+					document.getElementById("savedept").disabled = false;
+				}
+			}
+
+			function deptnamefiledvalidation() {
+				var dename = document.getElementById("dename").value;
+				if (dename.trim() == "") {
+					document.getElementById("denameef").innerHTML = "<b>Please enter department name !!!</b>";
+					document.getElementById("savedept").disabled = true;
+				} else if (dename.trim().length <= 4 || dename.length >= 20) {
+					document.getElementById("denameef").innerHTML = "<b>Department name length between 6 to 20 characters !!!</b>";
+					document.getElementById("savedept").disabled = true;
+				}
+
+				else {
+					document.getElementById("denameef").innerHTML = "";
+					document.getElementById("savedept").disabled = false;
+				}
+			}
+		</script>
+	</section>
+
+
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+
+<head>
+<meta charset="UTF-8" />
+
+</head>
+
+<body>
+	<section>
+		<div class="card mr-3 ml-3" id="shadow" style="width: auto;">
+
+
+			<script
+				src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+			<div class="card-body" id="bd01">
+				<div class="table-responsive-md">
+
+					<!-- 					<form class="main mt-3 mb-3" th:action="@{/home/userdeptaccess}"
+						th:object="${userDeptEntity}" method="post"
+						novalidate="novalidate"> -->
+					<!-- 	<div>
+						<b> User ID : </b> <input type="text" th:value="${session.userId}"
+							name="userid"></input><br> <b> User Name : </b> <input
+							type="text" th:value="${session.userfullname}" name="uFName"></input>
+					</div> -->
+<div>
+<h3>New Permission For All</h3>
+</div>
+
+					<table class="table table-striped" id="myTable">
+
+						<thead>
+							<tr class="text-uppercase">
+								<th scope="col" style="display: none;">User_ID</th>
+								<th scope="col" style="display: none;">Dept_ID</th>
+								<th scope="col" style="display: none;">Created_Date</th>
+								<th scope="col" style="display: none;">Created_By</th>
+								<th scope="col">Name</th>
+								<th scope="col">Department_Name</th>
+								<th scope="col">User_Role</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="dcl : ${deptCodeList}">
+								<td style="display: none;" th:text="${session.userId}"
+									th:value="${session.userId}"></td>
+								
+								<td style="display: none;" scope="row" th:text="${dcl.deid}"
+									th:value="${dcl.deid}"></td>
+								
+								<td style="display: none;" th:text="${session.curdate}"
+									th:value="${session.curdate}"></td>
+								
+								<td style="display: none;" th:text="${session.uid}"
+									th:value="${session.uid}"></td>
+									
+								<td th:text="${session.userfullname}"
+									th:value="${session.userfullname}"></td>
+
+								<td scope="row" th:text="${dcl.dename}" th:value="${dcl.dename}"></td>
+								<td scope="row"><select class="form-control"
+									aria-label="Default select example" name="role" id="role">
+										<option value="nouser">no permission</option>
+										<option value="user">user</option>
+										<option value="admin">admin</option>
+								</select></td>
+							</tr>
+						</tbody>
+
+					</table>
+					<div class="col-sm-11 text-center">
+						<button class="btn btn-outline-primary float-left " id="myButton"
+							type="submit" onclick="redirectpage()" style="width: 48%">Save
+							Department Access</button>
+						<a class="btn btn-outline-secondary float-right" type="reset"
+							style="width: 48%" th:href="@{/home/user/createrequest}">Back</a>
+					</div>
+
+
+
+<div>
+<h3>Present Permission</h3>
+</div>
+					<table class="table table-striped" id="myTable1">
+
+
+						<th:block th:if="${flag} != 'true'">
+							<thead>
+								<tr class="text-uppercase">
+									<th style="display: none;" scope="col">User_ID</th>
+									<th style="display: none;" scope="col">Dept_ID</th>
+									<th style="display: none;" scope="col">Created_Date</th>
+									<th style="display: none;" scope="col">Created_By</th>
+									<th scope="col">Name</th>
+									<th scope="col">Department_Name</th>
+									<th scope="col">User_Role</th>
+
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="dcl1 : ${allRollByUserId}">
+
+									<td style="display: none;" scope="row" th:text="${dcl1.userid}"
+										th:value="${dcl1.userid}"></td>
+									<td style="display: none;" scope="row" th:text="${dcl1.deptid}"
+										th:value="${dcl1.deptid}"></td>
+									<td style="display: none;" th:text="${session.curdate}"
+										th:value="${session.curdate}"></td>
+									<td style="display: none;" th:text="${session.uid}"
+										th:value="${session.uid}"></td>
+									<td th:text="${session.userfullname}"
+										th:value="${session.userfullname}"></td>
+
+									<td scope="row" th:text="${dcl1.deptid}"
+										th:value="${dcl1.deptid}"></td>
+									<td scope="row"><select class="form-control"
+										aria-label="Default select example" name="role" id="role">
+											<option th:text="${dcl1.role}" th:value="${dcl1.role}"
+												selected="selected"></option>
+											<option value="nouser">no permission</option>
+											<option value="user">user</option>
+											<option value="admin">admin</option>
+									</select></td>
+
+
+								</tr>
+							</tbody>
+
+						</th:block>
+
+					</table>
+
+				</div>
+			</div>
+		</div>
+
+
+		<script>
+			$(document)
+					.ready(
+							function() {
+								$("#myButton")
+										.on(
+												'click',
+												function() {
+													var arrData = [];
+													$("#myTable tbody  tr")
+															.each(
+																	function() {
+																		var currentRow = $(
+																				this)
+																				.closest(
+																						"tr");
+																		var col1_value = currentRow
+																				.find(
+																						"td:eq(0)")
+																				.text();
+																		var col2_value = currentRow
+																				.find(
+																						"td:eq(1)")
+																				.text();
+																		var col3_value = currentRow
+																				.find(
+																						"td:eq(2)")
+																				.text();
+																		var col4_value = currentRow
+																				.find(
+																						"td:eq(3)")
+																				.text();
+																		var col5_value = currentRow
+																				.find(
+																						"option:selected")
+																				.text();
+																		var obj = {};
+																		obj.userid = col1_value;
+																		obj.deptid = col2_value;
+																		obj.createddate = col3_value;
+																		obj.decreatedby = col4_value;
+																		obj.role = col5_value;
+																		arrData
+																				.push(obj);
+																	});
+													console.log(arrData);
+													$
+															.ajax({
+																type : "POST",
+																url : "http://localhost:9091/home/saveuserrole",
+																data : JSON
+																		.stringify(arrData),
+																contentType : "application/json",
+															});
+												});
+							});
+
+			function redirectpage() {
+				$(location).attr('href',
+						'http://localhost:9091/home/user/getalluser');
+
+			}
+		</script>
+
+
+	</section>
+</body>
+
+</html>

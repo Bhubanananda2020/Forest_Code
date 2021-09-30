@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+<head>
+<meta charset="UTF-8" />
+
+
+</head>
+<body>
+	<section>
+		<div class="card mr-3 ml-3" id="shadow" style="width: 100%;">
+
+
+			<div class="card-body" id="bd01">
+				<div class="table-responsive-md">
+					<table id="viewuser" class="display" style="width: 100%;">
+						<P>View All User List</P>
+						<thead>
+							<tr class="text-uppercase">
+								<th scope="col">User Name</th>
+								<th scope="col">FIrst Name</th>
+								<th scope="col">Last Name</th>
+								<th scope="col">Email</th>
+								<th scope="col"style="display: none;">Password</th>
+								<th scope="col">Create Date</th>
+								<th scope="col">Create By</th>
+								<th scope="col">IsActive</th>
+								<th scope="col" style="display: none">Action</th>
+		
+
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="au : ${alluser}">
+								<td scope="row"><a
+									th:href="@{'/home/'+${au.getuName()}+'/getuserbyuname'}"> <span
+										th:text="${au.getuName()}"></span>
+								</a></td>
+								<td scope="row" th:text="${au.getuFName()}"></td>
+								<td scope="row" th:text="${au.getuLName()}"></td>
+								<td scope="row" th:text="${au.getuEmail()}"></td>
+								<td scope="row" th:text="${au.getuPassword()}" style="display: none;"></td>
+								<td scope="row" th:text="${au.getuCDate()}"></td>
+								<td scope="row" th:text="${au.getuCBy()}"></td>
+								<td scope="row" th:text="${au.isuIsActive()}"></td>
+								<td scope="row" style="display: none"><a class="btn btn-primary">Delete</a></td>
+								
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+	</section>
+</body>
+</html>

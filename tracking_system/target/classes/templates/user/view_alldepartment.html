@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="user/base::layout(~{::section})">
+<head>
+<meta charset="UTF-8" />
+
+
+</head>
+<body>
+	<section>
+		<div class="card mr-3 ml-3" id="shadow" style="width: 100%;">
+
+
+			<div class="card-body" id="bd01">
+				<div class="table-responsive-md">
+					<table id="viewdept" class="display" style="width: 100%;">
+						<P>Department List</P>
+						<thead>
+							<tr class="text-uppercase">
+<!-- 								<th scope="col">Dept_id</th> -->
+								<th scope="col">dept_code</th>
+								<th scope="col">department_name</th>
+								<th scope="col">parent_department_code</th>
+								<th scope="col">created_date</th>
+<!-- 								<th scope="col">created_By</th> -->
+								<th scope="col">is_dept_active</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="ad : ${allDept}">
+								<!-- <td scope="row"><a
+									th:href="@{'/home/'+${au.getuName()}+'/getuserbyuname'}"> <span
+										th:text="${au.getuName()}"></span>
+								</a></td> -->
+								<!-- <td scope="row" th:text="${ad.getDeid()}"></td>
+								
+								 <td scope="row" th:text="${ad.getDecode()}"></td>
+								 -->
+								 
+								 <td scope="row"><a
+									th:href="@{'/home/'+${ad.getDecode()}+'/getdeptbydeptcode'}"> <span
+										th:text="${ad.getDecode()}"></span>
+								</a></td>
+								<td scope="row" th:text="${ad.getDename()}"></td>
+								<td scope="row" th:text="${ad.getDepcode()}"></td>
+								<td scope="row" th:text="${ad.getDecdate()}"></td>
+								<!-- <td scope="row" th:text="${ad.getDecreatedby()}"></td>
+								 --><td scope="row" th:text="${ad.isDeisactive()}"></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+	</section>
+</body>
+</html>

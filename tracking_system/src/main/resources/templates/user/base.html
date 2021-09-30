@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:fragment="layout(content)">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU"
+	crossorigin="anonymous">
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+	integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+	crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<link rel="stylesheet" th:href="@{/css/style.css}" />
+
+
+<link rel="stylesheet" type="text/css"
+	href="https://cdn.datatables.net/1.11.1/css/jquery.dataTables.css">
+<link rel="stylesheet"
+	href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+
+   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+		integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+		crossorigin="anonymous"></script>
+	<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+    
+
+<title th:text="${title}"></title>
+</head>
+<body style="background: #DEF2F1">
+	<!-- A1C3D1,DEF2F1
+ -->
+	<!-- Navbar Start-->
+	<nav class="fixed-top navbar navbar-expand-lg navbar-light bg-light">
+		<a class="navbar-brand" href="#"> <img
+			th:src="@{/images/Cozentus Logo.png}" alt="Cozentus-Logo"
+			style="height: 30px; width: 180px" class="d-inline-block align-top" />
+		</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse"
+			data-target="#navbarSupportedContent"
+			aria-controls="navbarSupportedContent" aria-expanded="false"
+			aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav ms-auto text-uppercase font-weight-bold">
+			
+			<li style="margin-top: 8px">
+			 <span th:text="#{language.change}"></span>: 
+			 <select id="locales">
+			<option value=""></option>
+			<option value="en" th:text="#{lang.en}"></option>
+			<option value="fr" th:text="#{lang.fr}"></option>
+			</select> 
+			</li>
+			
+			
+				<li class="nav-item "><a class="nav-link"
+					th:text="${session.isValidUser.uFName}"> </a></li>
+
+
+				<li class="nav-item "><a class="nav-link" href="#"
+					th:href="@{/home/logout}">Logout </a></li>
+			</ul>
+		</div>
+	</nav>
+	<!-- Navbar END -->
+
+
+
+
+
+	<!-- SIDE BAR START-->
+	<div class="sidebar mt-2 text-uppercase">
+		<!-- <span class="crossBtn" onclick="toggleSidebar()">&times;</span> 
+		 -->
+		 
+		<a href="#" class="item" th:href="@{/home/user/dashboard}"><i class="fas fa-home"></i>&emsp;<id th:text="#{dash1.text}">Home</a> 
+
+<th:block th:if="${session.isUserAdmin} == 'admin'">
+		<a href="#" th:href="@{/home/user/createuser}" class="item" ><i class="fas fa-pencil-alt"></i>&emsp;<id="dash2" th:text="#{dash2.text}">Add User</a> 
+		<a href="#" th:href="@{/home/user/getalluser}" class="item" ><i class="fas fa-book-open"></i>&emsp;<id="dash7" th:text="#{dash7.text}">View User</a> 
+</th:block>
+		<a href="#"	th:href="@{/home/user/createrequest}" class="item"><i class="fas fa-pencil-alt"></i>&emsp;<id="dash4" th:text="#{dash4.text}">Add Request</a> 
+		<a href="#" th:href="@{/home/user/viewrequest}" class="item"><i class="fas fa-book-open"></i>&emsp;<id="dash5" th:text="#{dash5.text}">View Request</a> 
+<th:block th:if="${session.isUserAdmin} == 'admin'">
+		<a href="#" th:href="@{/home/user/adminviewrequest}" class="item"><i class="fas fa-book-open"></i>&emsp;View Department Request</a> 
+</th:block>
+
+<th:block th:if="${session.isUserAdmin} == 'admin'">
+		<a href="#"	th:href="@{/home/user/selectdepartment}" class="item" ><i class="fas fa-pencil-alt"></i>&emsp;<id="dash3" th:text="#{dash3.text}">Add Department</a>
+		<a href="#" th:href="@{/home/user/getalldepartmentlist}" class="item" ><i class="fas fa-book-open" ></i>&emsp;<id="dash6" th:text="#{dash6.text}">View Department</a> 
+</th:block>
+
+		<a href="#" th:href="@{/home/user/myprofile}" class="item"><i class="fas fa-user-circle"></i>&emsp;<id="dash8" th:text="#{dash8.text}">My Profile</a>
+<th:block  th:if="${session.isUserAdmin} == 'admin'">
+		<a href="#" th:href="@{/home/user/mypassword}" class="item"><i class="fas fa-cogs"></i>&emsp;<id="dash9" th:text="#{dash9.text}">Reset Password</a> 
+</th:block>
+		<a href="#" th:href="@{/home/user/updatepassword}" class="item" ><i class="fas fa-cogs"></i>&emsp;<id="dash10" th:text="#{dash10.text}">Update Password</a>
+
+
+		<div class="divider">
+		<hr style="background: white">
+		</div>
+	</div>
+	<!-- SIDE BAR END-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- Start Content -->
+	<div class="content mt-5">
+
+		<i class="fas fa-bars m-3" onclick="toggleSidebar()"></i>
+
+
+		<!-- 
+		<div th:if="${session.message}" class="container ">
+			<div th:classappend="${'alert-'+session.message.type}"
+				class="alert alert-dismissible fade show text-center" role="alert">
+				<span th:text="${session.message.content}"></span>
+				<button type="button" class="close" data-dismiss="alert"
+					aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<th:block th:text="${#session.removeAttribute('message')}">
+			</th:block>
+		</div> -->
+
+		<div th:if="${session.message}"
+			th:classappend="${session.message.type}"
+			class="alert alert-warning alert-dismissible fade show" role="alert">
+			<p th:text="${session.message.content}" class="text-center"></p>
+			<th:block th:text="${#session.removeAttribute('message')}">
+			</th:block>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+
+			<th:block th:text="${#session.removeAttribute('message')}">
+			</th:block>
+		</div>
+
+
+
+
+
+
+
+
+
+
+		<div th:replace="${content}"></div>
+	</div>
+	<!-- End Content -->
+
+
+
+
+
+
+
+
+
+
+
+	<!-- 
+
+	<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+	<script type="text/javascript">
+
+function deleteContact(cid)
+{
+	swal({
+		  title: "Are you sure?",
+		  text: "You Want delete this Contact ?, you are not be able to recover this Contact!",
+		  icon: "warning",
+		  buttons: true,
+		  dangerMode: true,
+		})
+		.then((willDelete) => {
+		  if (willDelete) {
+			  window.location="/user/delete/"+cid;
+		      /* icon: "success", */
+		  } else {
+		    swal("Your contact is safe!");
+		  }
+		});
+}
+</script>
+ -->
+
+
+<script type="text/javascript">
+	
+    $(document).ready(function () {
+        $("#locales").change(function () {
+            var selectedOption = $('#locales').val();
+            if (selectedOption != '') {
+                window.location.replace('?language=' + selectedOption);
+            }
+        });
+    }); 
+    </script>
+    
+ 
+
+	<!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+		integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
+		crossorigin="anonymous"></script>
+	<script type="text/javascript" th:src="@{/js/script.js}"></script>
+
+	<script
+		src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script
+		src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+	<script>
+		$("#closereq").DataTable();
+		$("#arisedreq").DataTable();
+		$("#assignreq").DataTable();
+		$("#viewuser").DataTable();
+		$("#viewdept").DataTable();
+	</script>
+
+
+</body>
+</html>
