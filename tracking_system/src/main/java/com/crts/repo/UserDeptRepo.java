@@ -18,7 +18,7 @@ public interface UserDeptRepo extends JpaRepository<UserDeptEntity, Integer> {
 
 	
 	/* ========= No of user role by user id===============*/
-	@Query(value = "SELECT ud.user_role FROM user_dept ud where ud.user_id = :userid and ud.user_role != 'nouser'", nativeQuery = true)
+	@Query(value = "SELECT ud.user_role FROM user_dept ud where ud.user_id = :userid and ud.user_role != 'no permission'", nativeQuery = true)
 	public List<String> IsUserAdmin(int userid);
 
 

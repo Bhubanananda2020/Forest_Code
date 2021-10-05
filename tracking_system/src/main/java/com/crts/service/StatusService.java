@@ -49,4 +49,19 @@ public interface StatusService {
 
 	
 
+	/* ==================================== Super Admin request view work ============================================ */
+	
+	/* ======== Get ALL RAISED LATEST Request By LOGIN Admin ID ======== */
+	public List<StatusEntityview> getAllRaisedLastUpdateRequestforsuperadmin();
+
+	
+	/* ======== Get ALL ASSIGN LATEST Request By LOGIN Admin ID ======== */
+	public List<StatusEntityview> getAllAssignLastUpdateRequestforsuperadmin();
+
+	/* ======== Get ALL RAISED CLOSED Request By LOGIN Admin ID ======== */
+	public List<StatusEntityview> getAllRaisedClosedRequestforsuperadmin();
+
+	
+	
+	
 }

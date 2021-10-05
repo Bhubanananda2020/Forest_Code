@@ -233,26 +233,20 @@ public class HomeController {
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
 			return "index";
 		} else {
-			
-			if(session.getAttribute("isUserAdmin").equals("supadmin"))
-			{
-			List<UserEntity> alluser = this.userService.getAllUser();
-			model.addAttribute("title", "Home - Request Tracking System");
-			model.addAttribute("alluser", alluser);
-			return "user/view_userall";
-			}
-			else
-			{
-				List<UserEntity> alluser = this.userService.getAllUserByuIdForAdminView((int) session.getAttribute("uid"));
+
+			if (session.getAttribute("isUserAdmin").equals("supadmin")) {
+				List<UserEntity> alluser = this.userService.getAllUser();
+				model.addAttribute("title", "Home - Request Tracking System");
+				model.addAttribute("alluser", alluser);
+				return "user/view_userall";
+			} else {
+				List<UserEntity> alluser = this.userService
+						.getAllUserByuIdForAdminView((int) session.getAttribute("uid"));
 				model.addAttribute("title", "Home - Request Tracking System");
 				model.addAttribute("alluser", alluser);
 				return "user/view_userall";
 			}
-		
-		
-		
-		
-		
+
 		}
 	}
 
@@ -433,19 +427,45 @@ public class HomeController {
 
 			System.out.println(session.getAttribute("isUserAdmin"));
 
-			List<StatusEntityview> allraisestatusadmin = this.statusService
-					.getAllRaisedLastUpdateRequestforadmin((int) session.getAttribute("uid"));
-			List<StatusEntityview> allassignstatusadmin = this.statusService
-					.getAllAssignLastUpdateRequestforadmin((int) session.getAttribute("uid"));
-			List<StatusEntityview> allarriseclosedstatusadmin = this.statusService
-					.getAllRaisedClosedRequestforadmin((int) session.getAttribute("uid"));
+			if (session.getAttribute("isUserAdmin").equals("admin")) {
+				System.out.println();
+				System.out.println("This For admin");
+				System.out.println();
+				System.out.println();
+				List<StatusEntityview> allraisestatusadmin = this.statusService
+						.getAllRaisedLastUpdateRequestforadmin((int) session.getAttribute("uid"));
+				List<StatusEntityview> allassignstatusadmin = this.statusService
+						.getAllAssignLastUpdateRequestforadmin((int) session.getAttribute("uid"));
+				List<StatusEntityview> allarriseclosedstatusadmin = this.statusService
+						.getAllRaisedClosedRequestforadmin((int) session.getAttribute("uid"));
 
-			model.addAttribute("title", "Admin View - Request Track	ing System");
-			model.addAttribute("allraisestatusadmin", allraisestatusadmin);
-			model.addAttribute("allassignstatusadmin", allassignstatusadmin);
-			model.addAttribute("allarriseclosedstatusadmin", allarriseclosedstatusadmin);
-			System.out.println("===================");
-			return "user/viewrequestadmin";
+				model.addAttribute("title", "Admin View - Request Track	ing System");
+				model.addAttribute("allraisestatusadmin", allraisestatusadmin);
+				model.addAttribute("allassignstatusadmin", allassignstatusadmin);
+				model.addAttribute("allarriseclosedstatusadmin", allarriseclosedstatusadmin);
+				System.out.println("===================");
+				return "user/viewrequestadmin";
+			}
+
+			else {
+				System.out.println();
+				System.out.println("This For Super admin");
+				System.out.println();
+				System.out.println();
+				List<StatusEntityview> allraisestatusadmin = this.statusService
+						.getAllRaisedLastUpdateRequestforsuperadmin();
+				List<StatusEntityview> allassignstatusadmin = this.statusService
+						.getAllAssignLastUpdateRequestforsuperadmin();
+				List<StatusEntityview> allarriseclosedstatusadmin = this.statusService
+						.getAllRaisedClosedRequestforsuperadmin();
+				model.addAttribute("title", "Admin View - Request Track	ing System");
+				model.addAttribute("allraisestatusadmin", allraisestatusadmin);
+				model.addAttribute("allassignstatusadmin", allassignstatusadmin);
+				model.addAttribute("allarriseclosedstatusadmin", allarriseclosedstatusadmin);
+				System.out.println("===================");
+				return "user/viewrequestadmin";
+			}
+
 		}
 	}
 
