@@ -144,11 +144,16 @@ public class HomeController {
 	public String createuser(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult,
 			Model model, HttpSession session, HttpServletResponse response) {
 		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
+
+		System.out.println(session.getAttribute("isUserAdmin"));
+
 		if ((session.getAttribute("username") == null)) {
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			model.addAttribute("title", "Add User - Request Tracking System");
 			return "user/createuser";
@@ -163,9 +168,11 @@ public class HomeController {
 		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
 		if ((session.getAttribute("username") == null)) {
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			UserEntity user = this.userService.validatingUserNameOrEmailid(uname);
 			model.addAttribute("title", "Edit User - Request Tracking System");
@@ -201,9 +208,11 @@ public class HomeController {
 		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
 		if ((session.getAttribute("username") == null)) {
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			model.addAttribute("title", "Reset Password - Request Tracking System");
 			return "user/resetpassword";
@@ -218,14 +227,32 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
+			
+			if(session.getAttribute("isUserAdmin").equals("supadmin"))
+			{
 			List<UserEntity> alluser = this.userService.getAllUser();
 			model.addAttribute("title", "Home - Request Tracking System");
 			model.addAttribute("alluser", alluser);
 			return "user/view_userall";
+			}
+			else
+			{
+				List<UserEntity> alluser = this.userService.getAllUserByuIdForAdminView((int) session.getAttribute("uid"));
+				model.addAttribute("title", "Home - Request Tracking System");
+				model.addAttribute("alluser", alluser);
+				return "user/view_userall";
+			}
+		
+		
+		
+		
+		
 		}
 	}
 
@@ -237,9 +264,11 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			List<UserDeptEntity> allRollByUserId = this.userDeptService
 					.getAllRollByUserId((int) session.getAttribute("userId"));
@@ -247,12 +276,9 @@ public class HomeController {
 			if (allRollByUserId.isEmpty()) {
 				String flag = "true";
 				model.addAttribute("flag", flag);
-
-				System.out.println(flag);
 			} else {
 				String flag = "False";
 				model.addAttribute("flag", flag);
-				System.out.println(flag);
 			}
 			List<DeptEntity> deptCodeList = this.deptService.getAllDept();
 			model.addAttribute("deptCodeList", deptCodeList);
@@ -279,19 +305,33 @@ public class HomeController {
 		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
 		if ((session.getAttribute("username") == null)) {
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
+			if (session.getAttribute("isUserAdmin").equals("admin")) {
+				model.addAttribute("title", "Select Department - Request Tracking System");
+				List<String> allAdminDepartment = this.userDeptService
+						.AllAdminDepartment((int) session.getAttribute("uid"));
+				model.addAttribute("allAdminDepartment", allAdminDepartment);
+				session.setAttribute("allAdminDepartment", allAdminDepartment);
+				return "user/listofdepartment";
+			} else if (session.getAttribute("isUserAdmin").equals("supadmin")) {
+				System.out.println("sup add");
+				model.addAttribute("title", "Select Department - Request Tracking System");
+				List<String> allAdminDepartment = this.userDeptService.AllSupAdminDepartment();
+				model.addAttribute("allAdminDepartment", allAdminDepartment);
+				session.setAttribute("allAdminDepartment", allAdminDepartment);
+				return "user/selectdepartmentsup";
+			} else {
+				session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
+				return "user/dashboardpage";
+			}
 
-			model.addAttribute("title", "Select Department - Request Tracking System");
-			List<String> allAdminDepartment = this.userDeptService
-					.AllAdminDepartment((int) session.getAttribute("uid"));
-			model.addAttribute("allAdminDepartment", allAdminDepartment);
-			session.setAttribute("allAdminDepartment", allAdminDepartment);
 		}
 
-		return "user/listofdepartment";
 	}
 
 	/* ===== ADD DEPARTMENT PAGE ========= */
@@ -302,10 +342,13 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
+
 			model.addAttribute("title", "Child Department - Request Tracking System");
 			session.setAttribute("depcode", depcode);
 			return "user/createdepartment";
@@ -320,13 +363,23 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
-			List<DeptEntity> allDept = this.deptService.getAllDept();
-			model.addAttribute("allDept", allDept);
-			return "user/view_alldepartment";
+
+			if (session.getAttribute("isUserAdmin").equals("admin")) {
+				List<DeptEntity> allDept = this.deptService.getAllDeptAdmin((int) session.getAttribute("uid"));
+				model.addAttribute("allDept", allDept);
+				return "user/view_alldepartment";
+			} else {
+				List<DeptEntity> allDept = this.deptService.getAllDept();
+				model.addAttribute("allDept", allDept);
+				return "user/view_alldepartment";
+
+			}
 		}
 	}
 
@@ -532,9 +585,11 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			try {
 				UserEntity ue = new UserEntity();
@@ -592,31 +647,78 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			try {
 				int createby = (int) session.getAttribute("uid");
 				if (errors.hasErrors()) {
 					return "user/createdepartment";
 				} else {
-					System.out.println(dpcode);
-					boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby, diact);
-					if (isDepartmentSave) {
-						session.setAttribute("message",
-								new Message("Department Save Successfully !!", "alert-success"));
-						return "redirect:/home/user/getalldepartmentlist";
-					} else {
-						session.setAttribute("message",
-								new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-						return "redirect:user/createdepartment";
+
+					if (session.getAttribute("isUserAdmin").equals("supadmin")) {
+						boolean flagcheck = false;
+						List<String> list = this.userDeptService.AllSupAdminDepartment();
+						for (String alldept : list) {
+							if (alldept.equalsIgnoreCase(dpcode)) {
+								flagcheck = true;
+							}
+						}
+
+						if (flagcheck) {
+							boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
+									diact);
+							if (isDepartmentSave) {
+								session.setAttribute("message",
+										new Message("Department Save Successfully !!", "alert-success"));
+								return "redirect:/home/user/getalldepartmentlist";
+							} else {
+								session.setAttribute("message",
+										new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
+								return "redirect:user/getalldepartmentlist";
+							}
+						} else if (dcode.equalsIgnoreCase(dpcode)) {
+							boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
+									diact);
+							if (isDepartmentSave) {
+								session.setAttribute("message",
+										new Message("Department Save Successfully !!", "alert-success"));
+								return "redirect:/home/user/getalldepartmentlist";
+							} else {
+								session.setAttribute("message",
+										new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
+								return "redirect:user/getalldepartmentlist";
+							}
+						} else {
+							session.setAttribute("message",
+									new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
+							return "redirect:user/getalldepartmentlist";
+						}
 					}
+
+					else {
+						boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
+								diact);
+						if (isDepartmentSave) {
+							session.setAttribute("message",
+									new Message("Department Save Successfully !!", "alert-success"));
+							return "redirect:/home/user/getalldepartmentlist";
+						} else {
+							session.setAttribute("message",
+									new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
+							return "redirect:user/getalldepartmentlist";
+						}
+
+					}
+
 				}
 			} catch (Exception e) {
 				session.setAttribute("message", new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
 				errors.hasErrors();
-				return "user/createdepartment";
+				return "redirect:user/getalldepartmentlist";
 			}
 		}
 	}
@@ -782,9 +884,11 @@ public class HomeController {
 		if ((session.getAttribute("username") == null)) {
 			System.out.println(session.getAttribute("username"));
 			return "redirect:/home/";
-		} else if ((session.getAttribute("isUserAdmin") != "admin")) {
+		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
+				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
+			System.out.println("You are not a valid User!!");
 			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "redirect:/home/";
+			return "index";
 		} else {
 			try {
 				if (errors.hasErrors()) {
@@ -831,8 +935,10 @@ public class HomeController {
 
 		UserDeptEntity entity = null;
 
+		entity = this.userDeptService.saveUserDeptAccess(userDeptEntity);
+		System.out.println(DUDA);
 		if (DUDA > 0) {
-			entity = this.userDeptService.saveUserDeptAccess(userDeptEntity);
+
 		}
 
 		if (entity != null) {

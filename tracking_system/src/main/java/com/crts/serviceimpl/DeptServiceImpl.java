@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.crts.entity.DeptEntity;
 import com.crts.repo.DeptRepo;
+import com.crts.repo.UserDeptRepo;
 import com.crts.service.DeptService;
+import com.crts.service.UserDeptService;
 
 @Service
 public class DeptServiceImpl implements DeptService {
@@ -15,10 +17,15 @@ public class DeptServiceImpl implements DeptService {
 	@Autowired
 	private DeptRepo deptRepo;
 
+	@Autowired
+	private UserDeptRepo userDeptRepo;
+
+	
+	
 	/* ============ SAVE DEPARTMENT ============ */
 	public boolean saveDepartment(String dcode, String dname, String dpcode, int createby, String diact) {
 		boolean saveDepartmentFlag = false;
-		try {
+		try {			
 			long millis = System.currentTimeMillis();
 			java.sql.Date date = new java.sql.Date(millis);
 			Boolean deptstatus = Boolean.valueOf(diact);
@@ -76,7 +83,7 @@ public class DeptServiceImpl implements DeptService {
 		return this.deptRepo.getDeptIDByDeptCode(deptcode);
 	}
 
-	/* ============ GET ALL DEPARTMENT ============ */
+	/* ============ GET ALL DEPARTMENT FOR SUPER ADMIN ============ */
 	public List<DeptEntity> getAllDept() {
 		return this.deptRepo.findAll();
 	}
@@ -84,6 +91,11 @@ public class DeptServiceImpl implements DeptService {
 	/* ============ GET DEPARTMENT BY DEPARTMENT ID ============ */	
 	public DeptEntity getBydeid(int deid) {
 		return this.deptRepo.getById(deid);
+	}
+
+	/* ============ GET ALL DEPARTMENT FOR ADMIN============ */	
+	public List<DeptEntity> getAllDeptAdmin(int uId) {
+		return this.deptRepo.getAllDeptAdmin(uId);
 	}
 
 }

@@ -44,18 +44,22 @@
  -->
 	<!-- Navbar Start-->
 	<nav class="fixed-top navbar navbar-expand-lg navbar-light bg-light">
-		<a class="navbar-brand" href="#"> <img
+	  <div class="container-fluid">
+	    <a class="navbar-brand" href="#"> <img
 			th:src="@{/images/Cozentus Logo.png}" alt="Cozentus-Logo"
 			style="height: 30px; width: 180px" class="d-inline-block align-top" />
 		</a>
-		<button class="navbar-toggler" type="button" data-toggle="collapse"
-			data-target="#navbarSupportedContent"
-			aria-controls="navbarSupportedContent" aria-expanded="false"
-			aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
-
-		<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		
+	    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+	      <span class="navbar-toggler-icon"></span>
+	    </button>
+	    <div class="collapse navbar-collapse" id="navbarSupportedContent">		
+			
+			
+		
+		
+		
+		
 			<ul class="navbar-nav ms-auto text-uppercase font-weight-bold">
 			
 			<li style="margin-top: 8px">
@@ -85,33 +89,25 @@
 
 	<!-- SIDE BAR START-->
 	<div class="sidebar mt-2 text-uppercase">
-		<!-- <span class="crossBtn" onclick="toggleSidebar()">&times;</span> 
-		 -->
+		<!-- <span class="crossBtn" onclick="toggleSidebar()">&times;</span> -->
 		 
 		<a href="#" class="item" th:href="@{/home/user/dashboard}"><i class="fas fa-home"></i>&emsp;<id th:text="#{dash1.text}">Home</a> 
-
-<th:block th:if="${session.isUserAdmin} == 'admin'">
+<th:block th:if="${session.isUserAdmin == 'admin' or session.isUserAdmin == 'supadmin'}">
 		<a href="#" th:href="@{/home/user/createuser}" class="item" ><i class="fas fa-pencil-alt"></i>&emsp;<id="dash2" th:text="#{dash2.text}">Add User</a> 
 		<a href="#" th:href="@{/home/user/getalluser}" class="item" ><i class="fas fa-book-open"></i>&emsp;<id="dash7" th:text="#{dash7.text}">View User</a> 
 </th:block>
 		<a href="#"	th:href="@{/home/user/createrequest}" class="item"><i class="fas fa-pencil-alt"></i>&emsp;<id="dash4" th:text="#{dash4.text}">Add Request</a> 
 		<a href="#" th:href="@{/home/user/viewrequest}" class="item"><i class="fas fa-book-open"></i>&emsp;<id="dash5" th:text="#{dash5.text}">View Request</a> 
-<th:block th:if="${session.isUserAdmin} == 'admin'">
+<th:block th:if="${session.isUserAdmin == 'admin' or session.isUserAdmin == 'supadmin'}">
 		<a href="#" th:href="@{/home/user/adminviewrequest}" class="item"><i class="fas fa-book-open"></i>&emsp;View Department Request</a> 
-</th:block>
-
-<th:block th:if="${session.isUserAdmin} == 'admin'">
 		<a href="#"	th:href="@{/home/user/selectdepartment}" class="item" ><i class="fas fa-pencil-alt"></i>&emsp;<id="dash3" th:text="#{dash3.text}">Add Department</a>
 		<a href="#" th:href="@{/home/user/getalldepartmentlist}" class="item" ><i class="fas fa-book-open" ></i>&emsp;<id="dash6" th:text="#{dash6.text}">View Department</a> 
 </th:block>
-
 		<a href="#" th:href="@{/home/user/myprofile}" class="item"><i class="fas fa-user-circle"></i>&emsp;<id="dash8" th:text="#{dash8.text}">My Profile</a>
-<th:block  th:if="${session.isUserAdmin} == 'admin'">
+<th:block th:if="${session.isUserAdmin == 'admin' or session.isUserAdmin == 'supadmin'}">
 		<a href="#" th:href="@{/home/user/mypassword}" class="item"><i class="fas fa-cogs"></i>&emsp;<id="dash9" th:text="#{dash9.text}">Reset Password</a> 
 </th:block>
 		<a href="#" th:href="@{/home/user/updatepassword}" class="item" ><i class="fas fa-cogs"></i>&emsp;<id="dash10" th:text="#{dash10.text}">Update Password</a>
-
-
 		<div class="divider">
 		<hr style="background: white">
 		</div>

@@ -33,6 +33,7 @@ public interface UserDeptService {
 	
 	
 	public List<String> AllAdminDepartment(int uid);
+	public List<String> AllSupAdminDepartment();
 	
 	public List<UserDeptEntity> getAllRollByUserId(int userid);
 	

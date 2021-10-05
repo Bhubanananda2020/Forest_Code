@@ -48,6 +48,14 @@ public interface UserDeptRepo extends JpaRepository<UserDeptEntity, Integer> {
 			+ "inner join dept_entity de on de.Dept_id = ud.Dept_id\r\n"
 			+ "where ud.user_id = :userid  and ud.user_role = 'admin';", nativeQuery = true)
 	public List<String> AllAdminDepartment(int userid);
+
+	
+	
+	
+	/* ========= Get All super admin department by user id===============*/	
+	@Query(value = "SELECT DE.dept_code FROM dept_entity de", nativeQuery = true)
+	public List<String> AllSupAdminDepartment();
+	
 	
 	
 	

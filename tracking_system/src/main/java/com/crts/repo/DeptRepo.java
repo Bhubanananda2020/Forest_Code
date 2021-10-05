@@ -26,7 +26,7 @@ public interface DeptRepo extends JpaRepository<DeptEntity, Integer> {
 	
 	/* ============ GET ALL PARENT DEPARTMENT CODE By UserId ============ */
 	@Query(value = "SELECT parent_department_code FROM dept_entity\r\n"
-			+ "where Dept_id = (SELECT Dept_id FROM user_dept where user_id = :uId and user_role != 'nouser' );", nativeQuery = true)
+			+ "where Dept_id = (SELECT Dept_id FROM user_dept where user_id = :uId and user_role != 'no permission' );", nativeQuery = true)
 	public List<String> getAllDeptEntityParentCodeAndUid(@Param("uId") int uId);
 
 	/* ============ GET ALL DEPARTMENT CODE ============ */
@@ -48,6 +48,11 @@ public interface DeptRepo extends JpaRepository<DeptEntity, Integer> {
 	/* ============ GET DEPARTMENT BY DEPARTMENT ID ============ */	
 	public DeptEntity getBydeid(int deid);
 	
+	/* ============ GET All DEPARTMENT FOR ADMIN BY DEPARTMENT ID ============ */	
+	@Query(value = "select * from dept_entity where parent_department_code in \r\n"
+			+ "(SELECT parent_department_code FROM user_dept ud inner join dept_entity de on de.Dept_id=ud.Dept_id \r\n"
+			+ "where ud.user_id = :uId and ud.user_role = 'admin');", nativeQuery = true)
+	public List<DeptEntity> getAllDeptAdmin(@Param("uId") int uId);
 	
 	
 	

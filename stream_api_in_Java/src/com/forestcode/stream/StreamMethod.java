@@ -35,7 +35,7 @@ public class StreamMethod {
 		
 		Integer integer2 = numlist.stream().max((x,y)-> x.compareTo(y)).get();
 		System.out.println("Max Num "+integer2);
-		
+		System.out.println("sssssss");
 		
 		
 		

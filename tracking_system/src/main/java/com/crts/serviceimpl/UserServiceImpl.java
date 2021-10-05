@@ -38,9 +38,16 @@ public class UserServiceImpl extends java.lang.Object implements UserService {
 		UserEntity validuser = null;
 		try {
 			UserEntity entity = this.userRepo.getUserEntityByUserNameEmail(userName);
+			System.out.println();
+			System.out.println();
+			
+			System.out.println(entity);
+			System.out.println();
+			System.out.println();
+			System.out.println();
 			boolean bcryptDecoding = bcryptDecoding(password, entity.getuPassword());
 			if ((userName.equals(entity.getuName()) || userName.equals(entity.getuEmail()))
-					&& bcryptDecoding) {
+					&& bcryptDecoding && entity.isuIsActive()) {
 				validuser = entity;
 			} else {
 				validuser = null;
@@ -86,10 +93,19 @@ public class UserServiceImpl extends java.lang.Object implements UserService {
 		return flag;
 	}
 
+	/* ===== View All User ===== */	
 	public List<UserEntity> getAllUser() {
 		return this.userRepo.findAll();
 	}
 
+	/* ===== View All User FOR ADMIN VIEW ===== */	
+	public List<UserEntity> getAllUserByuIdForAdminView(int uid) {
+		return this.userRepo.getAllUserByuIdForAdminView(uid);
+	}
+
+	
+	
+	
 	public String getEmailIdByFirstName(String username) {
 		return this.userRepo.getEmailIdByFirstName(username);
 	}
@@ -117,19 +133,10 @@ public class UserServiceImpl extends java.lang.Object implements UserService {
 		return this.userRepo.saveAndFlush(ue);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
 
 	public UserEntity getById(int uid) {
 		return this.userRepo.getById(uid);
 	}
+
 
 }

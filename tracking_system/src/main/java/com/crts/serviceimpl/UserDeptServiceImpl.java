@@ -51,6 +51,10 @@ public class UserDeptServiceImpl implements UserDeptService {
 			if (isuser.equalsIgnoreCase("admin")) {
 				getreturnerole = "admin";
 			}
+			else if (isuser.equalsIgnoreCase("supadmin")) {
+				getreturnerole = "supadmin";
+			}
+
 		}
 		return getreturnerole;
 	}
@@ -60,6 +64,12 @@ public class UserDeptServiceImpl implements UserDeptService {
 
 	}
 
+	
+	public List<String> AllSupAdminDepartment() {
+		return this.userDeptRepo.AllSupAdminDepartment();
+	}
+	
+	
 	/* ========= No of Sub Department=============== */
 	public int noOfDepartment(int uid) {
 		return this.userDeptRepo.noOfDepartment(uid);

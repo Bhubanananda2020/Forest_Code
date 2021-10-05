@@ -21,6 +21,8 @@ public interface UserService {
 	/* ===== View All User ===== */	
 	public List<UserEntity> getAllUser();
 
+	/* ===== View All User FOR ADMIN VIEW ===== */	
+	public List<UserEntity> getAllUserByuIdForAdminView(int uid);
 
 	/* ===== Get Email Id By Firstname ===== */
 	public String getEmailIdByFirstName(String username);

@@ -82,7 +82,8 @@
 			</div>
 
 
-			<th:block th:if="${session.isUserAdmin} == 'admin'">
+
+			<th:block th:if="${session.isUserAdmin == 'admin' or session.isUserAdmin == 'supadmin'}">
 
 				<div class="row mt-4 d-flex justify-content-center">
 					<div class="col-lg-6 col-sm-12 d-flex justify-content-end">

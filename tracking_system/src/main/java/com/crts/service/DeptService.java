@@ -22,10 +22,11 @@ public interface DeptService {
 	/* ============ GET ALL DEPARTMENT CODE ============ */
 	public List<String> getAllDeptCode();
 	
-	/* ============ GET ALL DEPARTMENT ============ */
+	/* ============ GET ALL DEPARTMENT FOR SUPER ADMIN ============ */
 	public List<DeptEntity> getAllDept();
 
-	
+	/* ============ GET ALL DEPARTMENT FOR ADMIN============ */	
+	public List<DeptEntity> getAllDeptAdmin(int uId);
 	
 	
 	/* ============ GET DEPARTMENT CODE By Code ============ */
