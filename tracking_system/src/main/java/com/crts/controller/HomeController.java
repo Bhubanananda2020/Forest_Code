@@ -687,7 +687,7 @@ public class HomeController {
 								flagcheck = true;
 							}
 						}
-
+System.out.println(flagcheck);
 						if (flagcheck) {
 							boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
 									diact);
@@ -925,7 +925,7 @@ public class HomeController {
 						Map<String, Object> model = new HashMap<>();
 						model.put("UserCreateBy", session.getAttribute("username"));
 						model.put("NewUser", isUserSave.getuName());
-						model.put("NewPassword", isUserSave.getuPassword());
+						model.put("NewPassword", userEntity.getuPassword());
 						MailResponse emailw = service.sendNewUserEmail(isUserSave.getuEmail(), model);
 						session.setAttribute("message",
 								new Message("User Create Successfully !! New Username is  :  " + isUserSave.getuName(),
@@ -995,7 +995,6 @@ public class HomeController {
 	}
 
 	/* ======== user data pdf generation process ======== */
-
 	@GetMapping("/users/export/pdf")
 	public void exportToPDF(HttpServletResponse response) throws DocumentException, IOException {
 		response.setContentType("application/pdf");

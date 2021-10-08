@@ -163,11 +163,11 @@ public class DataController {
 	}
 		
 	
+	@GetMapping("/getAll")
+	public List<UserEntity> getAllUsers() {
+		return this.userService.getAllUser();
+	}
 	
-	
-	
-	
-	
-	
+
 
 }
