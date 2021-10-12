@@ -31,7 +31,9 @@ public interface UserService {
 	public UserEntity CreateNewUser(UserEntity ue);
 	
 	public UserEntity getById(int uid);
+
 	
+	public String getNewPassword();
 	
 	
 	

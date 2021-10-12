@@ -10,7 +10,7 @@ public interface DeptService {
 
 
 	/* ============ SAVE DEPARTMENT ============ */
-	public boolean saveDepartment(String dcode,String dname,String dpcode,int createby, String diact);
+	public DeptEntity saveDepartment(String dcode,String dname,String dpcode,int createby, String diact);
 	
 	/* ============ GET ALL PARENT DEPARTMENT CODE ============ */
 	public List<String> getAllParentDeptCodeAndUid(int uId);

@@ -17,7 +17,7 @@ public interface RequestService {
 	
 	
 	/* ======== Save Request ======== */
-	public boolean saveRequest(String reqtitle,String reqdesc, String reqtodepart, String getNewRequestNum,
+	public RequestEntity saveRequest(String reqtitle,String reqdesc, String reqtodepart, String getNewRequestNum,
 			int reqtoperson,String reqfstcomment,int createby, int piority, int severity);
 
 	

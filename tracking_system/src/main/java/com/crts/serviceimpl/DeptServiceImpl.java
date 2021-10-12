@@ -20,12 +20,10 @@ public class DeptServiceImpl implements DeptService {
 	@Autowired
 	private UserDeptRepo userDeptRepo;
 
-	
-	
 	/* ============ SAVE DEPARTMENT ============ */
-	public boolean saveDepartment(String dcode, String dname, String dpcode, int createby, String diact) {
-		boolean saveDepartmentFlag = false;
-		try {			
+	public DeptEntity saveDepartment(String dcode, String dname, String dpcode, int createby, String diact) {
+		DeptEntity saveDepartmentFlag = null;
+		try {
 			long millis = System.currentTimeMillis();
 			java.sql.Date date = new java.sql.Date(millis);
 			Boolean deptstatus = Boolean.valueOf(diact);
@@ -38,12 +36,10 @@ public class DeptServiceImpl implements DeptService {
 			de.setDeisactive(deptstatus);
 			DeptEntity save = this.deptRepo.save(de);
 			if (save != null) {
-				saveDepartmentFlag = true;
-			} else {
-				saveDepartmentFlag = false;
+				saveDepartmentFlag = save;
 			}
 		} catch (Exception e) {
-			saveDepartmentFlag = false;
+			e.printStackTrace();
 		}
 		return saveDepartmentFlag;
 	}
@@ -52,16 +48,11 @@ public class DeptServiceImpl implements DeptService {
 	public List<String> getAllParentDeptCodeAndUid(int uId) {
 		return this.deptRepo.getAllDeptEntityParentCodeAndUid(uId);
 	}
-	
-	
+
 	/* ============ GET ALL PARENT DEPARTMENT CODE ============ */
 	public List<String> getAllParentDeptCode() {
 		return this.deptRepo.getAllDeptEntityParentCode();
 	}
-
-	
-	
-	
 
 	/* ============ GET ALL DEPARTMENT CODE ============ */
 	public List<DeptEntity> getAllDeptEntityByCode(String deptcode) {
@@ -88,12 +79,12 @@ public class DeptServiceImpl implements DeptService {
 		return this.deptRepo.findAll();
 	}
 
-	/* ============ GET DEPARTMENT BY DEPARTMENT ID ============ */	
+	/* ============ GET DEPARTMENT BY DEPARTMENT ID ============ */
 	public DeptEntity getBydeid(int deid) {
 		return this.deptRepo.getById(deid);
 	}
 
-	/* ============ GET ALL DEPARTMENT FOR ADMIN============ */	
+	/* ============ GET ALL DEPARTMENT FOR ADMIN============ */
 	public List<DeptEntity> getAllDeptAdmin(int uId) {
 		return this.deptRepo.getAllDeptAdmin(uId);
 	}

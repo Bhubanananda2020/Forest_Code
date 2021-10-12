@@ -1,10 +1,5 @@
 package com.crts.serviceimpl;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -57,9 +52,9 @@ public class RequestServiceImpl implements RequestService {
 	}
 
 	/* ======== Save Request ======== */
-	public boolean saveRequest(String reqtitle, String reqdesc, String getNewRequestNum, String reqtodepart,
+	public RequestEntity saveRequest(String reqtitle, String reqdesc, String getNewRequestNum, String reqtodepart,
 			int reqtoperson, String reqfstcomment,  int createby, int piority, int severity) {
-		boolean isSaveRequest = false;
+		RequestEntity isSaveRequest = new RequestEntity();
 
 		try {
 
@@ -87,20 +82,11 @@ public class RequestServiceImpl implements RequestService {
 			re.setStatusEntity(selist);
 			re.setPiority(piority);
 			re.setSeverity(severity);
-			
 			se.setRequestEntity(re);
-
-			RequestEntity save = this.requestRepo.save(re);
-
-			if (save != null) {
-				isSaveRequest = true;
-			} else {
-				isSaveRequest = false;
-			}
+			isSaveRequest = this.requestRepo.save(re);
 			return isSaveRequest;
-
 		} catch (Exception e) {
-			return isSaveRequest = false;
+			return isSaveRequest = null;
 		}
 	}
 
