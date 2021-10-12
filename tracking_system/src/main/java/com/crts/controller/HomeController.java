@@ -841,6 +841,7 @@ public class HomeController {
 			entity = this.userDeptService.saveUserDeptAccess(userDeptEntity);
 			if (duda > 0) {
 			}
+//			</>
 			if (entity != null) {
 				session.removeAttribute("userId");
 				udd.setUserDeptEntity(entity);
