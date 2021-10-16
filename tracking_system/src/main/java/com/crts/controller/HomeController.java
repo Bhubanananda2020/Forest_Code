@@ -57,10 +57,14 @@ import com.crts.service.UserDeptService;
 import com.crts.service.UserService;
 import com.crts.serviceimpl.EmailService;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/home")
-@CrossOrigin("*")
 public class HomeController {
+
+	UserEntity a;
+
+	String b, c, d, e;
 
 	@Autowired
 	private UserService userService;
@@ -91,10 +95,25 @@ public class HomeController {
 	/* ===== HOME PAGE ========= */
 	@GetMapping("user/dashboard")
 	public ResponseEntity<Model> dashboard(Model model, HttpSession session, HttpServletResponse response) {
+		System.out.println("1111");
 		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
+
+		/*
+		 * System.out.println(); System.out.println();
+		 * System.out.println(session.getAttribute("isValidUser"));
+		 * System.out.println(session.getAttribute("username"));
+		 * System.out.println(session.getAttribute("useremail"));
+		 * System.out.println(session.getAttribute("uid"));
+		 * System.out.println(session.getAttribute("isUserAdmin"));
+		 * 
+		 * System.out.println();
+		 */
+
 		if ((session.getAttribute("username") == null)) {
+			System.out.println("22222");
 			return new ResponseEntity<Model>(model, HttpStatus.UNAUTHORIZED);
 		} else {
+			System.out.println("33333");
 			model.addAttribute("title", "Home - Request Tracking System");
 			int noOfDepartment = this.userDeptService.noOfDepartment((int) session.getAttribute("uid"));
 			int noOfUserInDepartment = this.userDeptService.noOfUserInDepartment((int) session.getAttribute("uid"));
@@ -112,6 +131,7 @@ public class HomeController {
 
 	/* ===== NEW USER PAGE ========= */
 	@GetMapping("createuser")
+	@CrossOrigin(origins = "http://localhost:4200")
 	public ResponseEntity<Model> createuser(Model model, HttpSession session, HttpServletResponse response) {
 		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
 		if ((!session.getAttribute("isUserAdmin").equals("admin"))
@@ -422,38 +442,47 @@ public class HomeController {
 	}
 
 	/* ===== lOGIN USER BY USER NAME AND PASSWORD PROCESS ========= */
+
 	@PostMapping(value = "/loginProcess")
-	public ResponseEntity<UserDTO> checklogin(@Valid UserEntity userEntity, BindingResult bindingResult, Model model,
-			Errors errors, @RequestParam("uName") String username, @RequestParam("uPassword") String password,
-			HttpSession session, HttpServletResponse response) {
+	public ResponseEntity<UserDTO> checklogin(@RequestBody UserEntity userEntity, HttpSession session) {
 		UserDTO ud = new UserDTO();
 		try {
-			if (errors.hasErrors()) {
-				ud.setMessage("Invalid Data!!");
-				return new ResponseEntity<UserDTO>(ud, HttpStatus.BAD_REQUEST);
+			UserEntity isValidUser = this.userService.userValidate(userEntity.getuName(), userEntity.getuPassword());
+			if (isValidUser != null) {
+				String isUserAdmin = this.userDeptService.IsUserAdmin(isValidUser.getuId());
+				ud.setUserEntity(isValidUser);
+				ud.setMessage("Welcome " + isValidUser.getuFName());
+				ud.setRole(isUserAdmin);
+
+				a = isValidUser;
+				b = isUserAdmin;
+
+				session.setAttribute("isValidUser", isValidUser);
+				session.setAttribute("username", isValidUser.getuFName());
+				session.setAttribute("useremail", isValidUser.getuEmail());
+				session.setAttribute("uid", isValidUser.getuId());
+				session.setAttribute("isUserAdmin", isUserAdmin);
+				
+				  System.out.println(); System.out.println();
+				  System.out.println(session.getAttribute("isValidUser"));
+				  System.out.println(session.getAttribute("username"));
+				  System.out.println(session.getAttribute("useremail"));
+				  System.out.println(session.getAttribute("uid"));
+				  System.out.println(session.getAttribute("isUserAdmin"));
+				  
+				  System.out.println();
+				 
+
+				return new ResponseEntity<UserDTO>(ud, HttpStatus.OK);
 			} else {
-				UserEntity isValidUser = this.userService.userValidate(username, password);
-				if (isValidUser != null) {
-					String isUserAdmin = this.userDeptService.IsUserAdmin(isValidUser.getuId());
-					ud.setUserEntity(isValidUser);
-					ud.setMessage("Welcome " + isValidUser.getuFName());
-					ud.setRole(isUserAdmin);
-
-					session.setAttribute("isValidUser", isValidUser);
-					session.setAttribute("username", isValidUser.getuFName());
-					session.setAttribute("useremail", isValidUser.getuEmail());
-					session.setAttribute("uid", isValidUser.getuId());
-					session.setAttribute("isUserAdmin", isUserAdmin);
-
-					return new ResponseEntity<UserDTO>(ud, HttpStatus.OK);
-				} else {
-					ud.setMessage("Invalid UserId or Password");
-					return new ResponseEntity<UserDTO>(ud, HttpStatus.UNAUTHORIZED);
-				}
+				ud.setMessage("Invalid UserId or Password");
+				return new ResponseEntity<UserDTO>(ud, HttpStatus.UNAUTHORIZED);
 			}
+
 		} catch (Exception e) {
 			ud.setMessage("Invalid data");
 			return new ResponseEntity<UserDTO>(ud, HttpStatus.BAD_REQUEST);
+
 		}
 	}
 
