@@ -21,20 +21,13 @@ public class DeptServiceImpl implements DeptService {
 	private UserDeptRepo userDeptRepo;
 
 	/* ============ SAVE DEPARTMENT ============ */
-	public DeptEntity saveDepartment(String dcode, String dname, String dpcode, int createby, String diact) {
+	public DeptEntity saveDepartment(DeptEntity deptEntity) {
 		DeptEntity saveDepartmentFlag = null;
 		try {
 			long millis = System.currentTimeMillis();
 			java.sql.Date date = new java.sql.Date(millis);
-			Boolean deptstatus = Boolean.valueOf(diact);
-			DeptEntity de = new DeptEntity();
-			de.setDecode(dcode);
-			de.setDename(dname);
-			de.setDepcode(dpcode);
-			de.setDecdate(date);
-			de.setDecreatedby(createby);
-			de.setDeisactive(deptstatus);
-			DeptEntity save = this.deptRepo.save(de);
+			deptEntity.setDecdate(date);
+			DeptEntity save = this.deptRepo.save(deptEntity);
 			if (save != null) {
 				saveDepartmentFlag = save;
 			}

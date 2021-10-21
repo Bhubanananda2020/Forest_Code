@@ -52,38 +52,26 @@ public class RequestServiceImpl implements RequestService {
 	}
 
 	/* ======== Save Request ======== */
-	public RequestEntity saveRequest(String reqtitle, String reqdesc, String getNewRequestNum, String reqtodepart,
-			int reqtoperson, String reqfstcomment,  int createby, int piority, int severity) {
+	public RequestEntity saveRequest(RequestEntity requestEntity) {
 		RequestEntity isSaveRequest = new RequestEntity();
 
 		try {
-
 			String reqstatus = "NEW REQUEST";
 			long millis = System.currentTimeMillis();
 			java.sql.Date date = new java.sql.Date(millis);
 			char stuscod = reqstatus.charAt(0);
-
 			List<StatusEntity> selist = new ArrayList<StatusEntity>();
 			StatusEntity se = new StatusEntity();
 			se.setSescode(stuscod);
 			se.setSestdesc(reqstatus);
 			se.setReqdate(date);
-			se.setReqcreateby(createby);
+			se.setReqcreateby(requestEntity.getRecreatedby());
 			selist.add(se);
-			RequestEntity re = new RequestEntity();
-			re.setReqdeptcode(reqtodepart);
-			re.setReqcode(getNewRequestNum);
-			re.setReqtitle(reqtitle);
-			re.setReqdesc(reqdesc);
-			re.setReqassignto(reqtoperson);
-			re.setReqassigndate(date);
-			re.setReqinicomment(reqfstcomment);
-			re.setRecreatedby(createby);
-			re.setStatusEntity(selist);
-			re.setPiority(piority);
-			re.setSeverity(severity);
-			se.setRequestEntity(re);
-			isSaveRequest = this.requestRepo.save(re);
+			requestEntity.setReqassigndate(date);
+			requestEntity.setStatusEntity(selist);
+			se.setRequestEntity(requestEntity);
+
+			isSaveRequest = this.requestRepo.save(requestEntity);
 			return isSaveRequest;
 		} catch (Exception e) {
 			return isSaveRequest = null;
@@ -116,14 +104,12 @@ public class RequestServiceImpl implements RequestService {
 
 			String reqtitle = (String) obj101[0];
 			String firstname = ((String) obj101[1]);
-			Date comdate = (Date) (obj101[2]);	
-			
+			Date comdate = (Date) (obj101[2]);
+
 			System.out.println("===============");
-			String comdesc = (String ) (obj101[3]);	
+			String comdesc = (String) (obj101[3]);
 			System.out.println("----------------");
 
-
-						
 			CommentsHistory che = new CommentsHistory();
 			che.setRequesttitle(reqtitle);
 			che.setUserfirstname(firstname);
@@ -133,22 +119,17 @@ public class RequestServiceImpl implements RequestService {
 			allCommentHistory.add(che);
 		}
 
-		
 		return allCommentHistory;
 	}
-	
+
 	/* ========= No of raised Request for Department=============== */
 	public int noOfRaisedRequestInDepartment(int uid) {
 		return this.requestRepo.noOfRaisedRequestInDepartment(uid);
 	}
 
-
 	/* ========= No of Complete Request for Department=============== */
 	public int noOfAssignedRequestInDepartment(int uid) {
 		return this.requestRepo.noOfAssignedRequestInDepartment(uid);
 	}
-
-
-
 
 }
