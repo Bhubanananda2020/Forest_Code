@@ -1,6 +1,7 @@
 package com.crts.controller;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.crts.dto.RequestDTO;
+import com.crts.entity.CommentsEntity;
 import com.crts.entity.DeptEntity;
 import com.crts.entity.MailResponse;
 import com.crts.entity.RequestEntity;
+import com.crts.entity.StatusEntity;
 import com.crts.entity.StatusEntityview;
 import com.crts.entity.UserEntity;
 import com.crts.helper.JwtUtilHelper;
@@ -43,9 +46,9 @@ import com.crts.service.UserService;
 import com.crts.serviceimpl.CustomUserDetailsService;
 import com.crts.serviceimpl.EmailService;
 
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/home")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class HomeController {
 
 	@Autowired
@@ -84,9 +87,10 @@ public class HomeController {
 
 			if (isValidUser != null) {
 				UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(userEntity.getuName());
-				responseHeaders.add("Authorization", "Bearer " + this.jwtUtilHelper.generateToken(userDetails));
+				responseHeaders.add("authorization", this.jwtUtilHelper.generateToken(userDetails));
 				responseHeaders.add("userrole", this.userDeptService.IsUserAdmin(isValidUser.getuId()));
-				responseHeaders.add("", "");
+				responseHeaders.add("Access-Control-Expose-Headers", "authorization");
+				responseHeaders.add("Access-Control-Expose-Headers", "userrole");
 				ar.setObj(lstue);
 				ar.setStatus(HttpStatus.OK);
 				ar.setMessage("Login Successfully");
@@ -106,8 +110,8 @@ public class HomeController {
 	}
 
 	/* ===== Save New User PROCESS ===== */
-	@PostMapping("/createuser")
-	public ResponseEntity<Apiresponse> savenewuser(@Valid @RequestBody UserEntity userEntity, HttpSession session,
+	@RequestMapping(value = "/createuser", method = RequestMethod.POST)
+	public ResponseEntity<Apiresponse> savenewuser(@RequestBody UserEntity userEntity, HttpSession session,
 			HttpServletResponse response, HttpServletRequest request) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
@@ -194,8 +198,8 @@ public class HomeController {
 
 	/* ===== GET USER BY ID PAGE ========= */
 	@GetMapping("/{uname}/getuser")
-	public ResponseEntity<Apiresponse> GetUserByUname(@PathVariable("uname") String uname, Model model,
-			HttpSession session, HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<Apiresponse> GetUserByUname(@PathVariable("uname") String uname, HttpSession session,
+			HttpServletRequest request, HttpServletResponse response) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
 		String userrole = request.getHeader("userrole");
@@ -212,6 +216,39 @@ public class HomeController {
 			ar.setStatus(HttpStatus.UNAUTHORIZED);
 			ar.setMessage("You are not a valid User");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
+	}
+
+	/* ======== Update user date PROCESS ======== */
+	@PostMapping("/updateusers")
+	public ResponseEntity<Apiresponse> updateUser(@RequestBody UserEntity userEntity, HttpSession session,
+			HttpServletResponse response, HttpServletRequest request) {
+
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		UserEntity oldUserData = this.userService.validatingUserNameOrEmailid(userEntity.getuEmail());
+		userEntity.setuId(oldUserData.getuId());
+		userEntity.setuCBy(oldUserData.getuCBy());
+		userEntity.setuCDate(oldUserData.getuCDate());
+		if (userEntity.getuPassword() == null || userEntity.getuPassword().isEmpty()) {
+			userEntity.setuPassword(oldUserData.getuPassword());
+		}
+		UserEntity updateUserData = this.userService.CreateNewUser(userEntity);
+
+		if (updateUserData != null) {
+			lstue.add(updateUserData);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("UpdateUser Sucessfully");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -442,7 +479,7 @@ public class HomeController {
 
 	/* ===== Generate New Request PROCESS ===== */
 	@PostMapping("/generaterequest")
-	public ResponseEntity<Apiresponse> saveRequest(@RequestBody RequestEntity requestEntity, HttpSession session,
+	public ResponseEntity<Apiresponse> saveRequest(@Valid @RequestBody RequestEntity requestEntity, HttpSession session,
 			HttpServletRequest request, HttpServletResponse response) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
@@ -478,73 +515,28 @@ public class HomeController {
 		}
 	}
 
-	/* ===== VIEW REQUEST PAGE ========= */
-	@GetMapping("/viewallrequest")
-	public ResponseEntity<Apiresponse> viewallreq(HttpServletRequest request, HttpSession session,
+	/* ===== VIEW REQUEST PAGE Super admin allarrisestatus ========= */
+	@GetMapping("/viewallrequest/allarrisestatus")
+	public ResponseEntity<Apiresponse> viewallreqallarrisestatus(HttpServletRequest request, HttpSession session,
 			HttpServletResponse response) {
-
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
 		String userrole = request.getHeader("userrole");
 		int userid = Integer.parseInt(request.getHeader("userid"));
-
 		if (userrole.equalsIgnoreCase("supadmin")) {
-
-			List<StatusEntityview> allarrisestatus = this.statusService.getAllArrisedLastUpdateRequest(userid);
-			List<StatusEntityview> allassignstatus = this.statusService.getAllAssignLastUpdateRequest(userid);
-			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			List<StatusEntityview> allarrisestatus = this.statusService.getAllRaisedLastUpdateRequestforsuperadmin();
 			lstue.add(allarrisestatus);
-			lstue.add(allassignstatus);
-			lstue.add(allarriseclosedstatus);
-
-			List<StatusEntityview> allraisestatusadmin = this.statusService
-					.getAllRaisedLastUpdateRequestforsuperadmin();
-			List<StatusEntityview> allassignstatusadmin = this.statusService
-					.getAllAssignLastUpdateRequestforsuperadmin();
-			List<StatusEntityview> allarriseclosedstatusadmin = this.statusService
-					.getAllRaisedClosedRequestforsuperadmin();
-			lstue.add(allraisestatusadmin);
-			lstue.add(allassignstatusadmin);
-			lstue.add(allarriseclosedstatusadmin);
 			ar.setObj(lstue);
 			ar.setStatus(HttpStatus.OK);
 			ar.setMessage("Super Admin all request View");
 			return ResponseEntity.ok().body(ar);
 		} else if (userrole.equalsIgnoreCase("admin")) {
-
-			List<StatusEntityview> allarrisestatus = this.statusService.getAllArrisedLastUpdateRequest(userid);
-			List<StatusEntityview> allassignstatus = this.statusService.getAllAssignLastUpdateRequest(userid);
-			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
-			lstue.add(allarrisestatus);
-			lstue.add(allassignstatus);
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllRaisedClosedRequestforadmin(userid);
 			lstue.add(allarriseclosedstatus);
-
-			List<StatusEntityview> allraisestatusadmin = this.statusService
-					.getAllRaisedLastUpdateRequestforadmin(userid);
-			List<StatusEntityview> allassignstatusadmin = this.statusService
-					.getAllAssignLastUpdateRequestforadmin(userid);
-			List<StatusEntityview> allarriseclosedstatusadmin = this.statusService
-					.getAllRaisedClosedRequestforadmin(userid);
-			lstue.add(allraisestatusadmin);
-			lstue.add(allassignstatusadmin);
-			lstue.add(allarriseclosedstatusadmin);
 			ar.setObj(lstue);
 			ar.setStatus(HttpStatus.OK);
 			ar.setMessage("Admin all request View");
 			return ResponseEntity.ok().body(ar);
-
-		} else if (userrole.equalsIgnoreCase("user")) {
-			List<StatusEntityview> allarrisestatus = this.statusService.getAllArrisedLastUpdateRequest(userid);
-			List<StatusEntityview> allassignstatus = this.statusService.getAllAssignLastUpdateRequest(userid);
-			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
-			lstue.add(allarrisestatus);
-			lstue.add(allassignstatus);
-			lstue.add(allarriseclosedstatus);
-			ar.setObj(lstue);
-			ar.setStatus(HttpStatus.OK);
-			ar.setMessage("Super Admin Department View");
-			return ResponseEntity.ok().body(ar);
-
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
@@ -553,15 +545,195 @@ public class HomeController {
 		}
 	}
 
+	/* ===== VIEW REQUEST PAGE Super admin allassignstatus ========= */
+	@GetMapping("/viewallrequest/allassignstatus")
+	public ResponseEntity<Apiresponse> viewallreqallassignstatus(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allassignstatus = this.statusService.getAllAssignLastUpdateRequestforsuperadmin();
+			lstue.add(allassignstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService
+					.getAllAssignLastUpdateRequestforadmin(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wronge");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE Super admin allarriseclosedstatus ========= */
+	@GetMapping("/viewallrequest/allarriseclosedstatus")
+	public ResponseEntity<Apiresponse> viewallreqallarriseclosedstatus(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllRaisedClosedRequestforsuperadmin();
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService
+					.getAllRaisedLastUpdateRequestforadmin(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wronge");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE user allarrisestatus ========= */
+	@GetMapping("/viewallrequest/allraisestatususer")
+	public ResponseEntity<Apiresponse> viewallallarrisestatususers(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allraisestatususer = this.statusService.getAllArrisedLastUpdateRequest(userid);
+			lstue.add(allraisestatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allraisestatususer = this.statusService.getAllArrisedLastUpdateRequest(userid);
+			lstue.add(allraisestatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("user")) {
+			List<StatusEntityview> allraisestatususer = this.statusService.getAllArrisedLastUpdateRequest(userid);
+			lstue.add(allraisestatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		}
+
+		else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wronge");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE user allassignstatus ========= */
+	@GetMapping("/viewallrequest/allassignstatussususer")
+	public ResponseEntity<Apiresponse> viewallallassignstatususers(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allassignstatususer = this.statusService.getAllAssignLastUpdateRequest(userid);
+			lstue.add(allassignstatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allassignstatususer = this.statusService.getAllAssignLastUpdateRequest(userid);
+			lstue.add(allassignstatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("user")) {
+			List<StatusEntityview> allassignstatususer = this.statusService.getAllAssignLastUpdateRequest(userid);
+			lstue.add(allassignstatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		}
+
+		else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wronge");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE user allarriseclosedstatus ========= */
+	@GetMapping("/viewallrequest/allarriseclosedstatususer")
+	public ResponseEntity<Apiresponse> viewallarriseclosedstatususers(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("user")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		}
+
+		else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wronge");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
 	/* ===== VIEW REQUEST BY REQUEST CODE PAGE ========= */
-	@GetMapping("{rcode}/getrequestbycode")
+	@GetMapping("getrequestbycode/{rcode}")
 	public ResponseEntity<Apiresponse> GetRequestByreqcode(@PathVariable("rcode") String rcode,
 			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
 		String userrole = request.getHeader("userrole");
 		int userid = Integer.parseInt(request.getHeader("userid"));
-		System.out.println(rcode);
+		UserEntity RequestSenderPerson = this.userService.getById(userid);
+
 		RequestEntity getReuestEntity = this.requestService.getRequestByReqcode(rcode);
 
 		if ((userid == getReuestEntity.getReqassignto()) || (userid == getReuestEntity.getRecreatedby())
@@ -579,4 +751,34 @@ public class HomeController {
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 	}
+
+	/* ===== MODIFY REQUEST PROCESS========= */
+	@PostMapping("/updaterequest")
+	public ResponseEntity<Apiresponse> updateRequest(@Valid RequestEntity requestEntity, HttpServletRequest request,
+			HttpSession session, HttpServletResponse response) {
+
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		StatusEntity statusEntity = new StatusEntity();
+		statusEntity.setSestdesc(requestEntity.getStatusEntity().get(0).getSestdesc());
+
+		RequestEntity updateRequest = this.requestService.updateRequest(requestEntity, statusEntity, userid);
+		if (updateRequest != null) {
+			lstue.add(updateRequest);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
+
+	}
+
 }

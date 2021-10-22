@@ -25,7 +25,6 @@ import com.crts.service.UserService;
 
 @RestController
 @RequestMapping("/getdata")
-@CrossOrigin("*")
 public class DataController {
 
 	@Autowired

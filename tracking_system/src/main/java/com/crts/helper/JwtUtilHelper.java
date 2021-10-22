@@ -17,7 +17,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 public class JwtUtilHelper implements Serializable {
 
 	private static final long serialVersionUID = 16102021L;
-	private static final long JWT_TOKEN_VALIDATY = 100 * 60 * 60;
+	private static final long JWT_TOKEN_VALIDATY = 10000 * 60 * 60;
 
 	private String SECRET_KEY = "ForestcodeWithAlpha";
 

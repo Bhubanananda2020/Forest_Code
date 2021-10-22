@@ -2,23 +2,39 @@ package com.crts.serviceimpl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.crts.dto.RequestDTO;
+import com.crts.entity.CommentsEntity;
 import com.crts.entity.CommentsHistory;
+import com.crts.entity.MailResponse;
 import com.crts.entity.RequestEntity;
 import com.crts.entity.StatusEntity;
+import com.crts.entity.UserEntity;
 import com.crts.repo.RequestRepo;
 import com.crts.service.RequestService;
+import com.crts.service.UserService;
 
 @Service
 public class RequestServiceImpl implements RequestService {
 
 	@Autowired
+	private UserService userService;
+
+	@Autowired
 	private RequestRepo requestRepo;
+	@Autowired
+	private RequestService requestService;
+	@Autowired
+	private EmailService service;
 
 	/* ======== Generate Request Code ======== */
 	public String getLastRequestNumberByDeptId(String deptcode) {
@@ -71,9 +87,14 @@ public class RequestServiceImpl implements RequestService {
 			requestEntity.setStatusEntity(selist);
 			se.setRequestEntity(requestEntity);
 
+			System.out.println();
+			System.out.println();
+			System.out.println();
+			System.out.println(requestEntity);
 			isSaveRequest = this.requestRepo.save(requestEntity);
 			return isSaveRequest;
 		} catch (Exception e) {
+			System.out.println(e);
 			return isSaveRequest = null;
 		}
 	}
@@ -85,14 +106,64 @@ public class RequestServiceImpl implements RequestService {
 
 	/* ======== Update Request ======== */
 	@Transactional
-	public RequestEntity updateRequest(RequestEntity re) {
+	public RequestEntity updateRequest(RequestEntity re, StatusEntity se, int userid) {
+		RequestEntity rereturn = new RequestEntity();
 		try {
-			System.out.println("23");
-			return this.requestRepo.saveAndFlush(re);
+			RequestEntity oldRequestEntity = this.requestService.getRequestByReqcode(re.getReqcode());
+
+			long millis = System.currentTimeMillis();
+			java.sql.Date date = new java.sql.Date(millis);
+
+			CommentsEntity ce = new CommentsEntity();
+			ce.setCmdesc(re.getReqinicomment());
+			ce.setCmreqdate(date);
+			ce.setCmreqcreateby(userid);
+			se.setSescode(se.getSestdesc().charAt(0));
+			se.setReqdate(date);
+			se.setReqcreateby(userid);
+			List<StatusEntity> selist = new ArrayList<StatusEntity>();
+			List<CommentsEntity> celist = new ArrayList<CommentsEntity>();
+			selist.add(se);
+			celist.add(ce);
+			if (re.getReqdeptcode().equalsIgnoreCase(oldRequestEntity.getReqdeptcode())) {
+				re.setReqcode(re.getReqcode());
+			} else {
+				String getNewRequestNum = re.getReqdeptcode()
+						+ this.requestService.getLastRequestNumberByDeptId(re.getReqdeptcode());
+				re.setReqcode(getNewRequestNum);
+			}
+			re.setReqassigndate(oldRequestEntity.getReqassigndate());
+			re.setReqinicomment(oldRequestEntity.getReqinicomment());
+			re.setRecreatedby(oldRequestEntity.getRecreatedby());
+			re.setStatusEntity(selist);
+			re.setcCommentsEntity(celist);
+			se.setRequestEntity(re);
+			ce.setRequestEntity(re);
+
+			rereturn = this.requestRepo.saveAndFlush(re);
+			if (rereturn != null) {
+				if (se.getSestdesc().equals("CLOSE REQUEST")) {
+					UserEntity senderId = this.userService.getById(oldRequestEntity.getRecreatedby());
+					Map<String, Object> model = new HashMap<>();
+					model.put("Requestby", senderId.getuFName());
+					model.put("reqno", re.getReqcode());
+					model.put("reqtitle", re.getReqtitle());
+					model.put("reqmessage", "Your request is closed");
+					MailResponse emailw = service.sendResetPasswordEmail(senderId.getuEmail(), model);
+					System.out.println("Mail sent " + senderId.getuEmail());
+				}
+				return rereturn;
+			}
+			else
+			{
+				return null;
+			}
 		} catch (Exception e) {
-			System.out.println(e);
+			e.printStackTrace();
+			return null;
 		}
-		return re;
+
+
 	}
 
 	/* ===== Get All comments By Request Id and user id ===== */
