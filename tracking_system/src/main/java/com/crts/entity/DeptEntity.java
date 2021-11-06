@@ -25,16 +25,13 @@ public class DeptEntity {
 	@Column(name = "Dept_id")
 	private int deid;
 
-	@NotEmpty(message = "Department Code Required !!")
 	@Column(length = 25, name = "dept_code")
 	private String decode;
 
-	@NotEmpty(message = "Department Name Required !!")
-	@Size(min = 4, max = 25, message = "Minimun Length 4 and maximun 25 charactes are Required !!")
+
 	@Column(length = 25, name = "department_name")
 	private String dename;
 
-	@NotEmpty(message = "Parent Dept Code Required !!")
 	@Column(length = 25, name = "parent_department_code")
 	private String depcode;
 

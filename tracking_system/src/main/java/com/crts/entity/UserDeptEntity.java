@@ -25,14 +25,12 @@ public class UserDeptEntity {
 	@Column(name = "user_dept_id")
 	private int userdeptid;
 
-
 	@Column(name = "user_id")
 	private int userid;
-	
-	
-	  @Column(name = "Dept_id") private int deptid;
-	 
-	
+
+	@Column(name = "Dept_id")
+	private int deptid;
+
 	@Column(name = "created_date")
 	private Date createddate;
 
@@ -43,24 +41,10 @@ public class UserDeptEntity {
 	private String role;
 
 	
-	
-	
-	
 	/*
 	 * @ManyToOne(cascade = CascadeType.ALL)
-	 * 
 	 * @JoinColumn(name = "Dept_id")
-	 * 
 	 * @JsonBackReference private DeptEntity deptEntity;
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
-	 * 
 	 * 
 	 * public DeptEntity getDeptEntity() { return deptEntity; }
 	 * 
@@ -85,11 +69,13 @@ public class UserDeptEntity {
 		this.userid = userid;
 	}
 
-	
-	  public int getDeptid() { return deptid; }
-	  
-	  public void setDeptid(int deptid) { this.deptid = deptid; }
-	 
+	public int getDeptid() {
+		return deptid;
+	}
+
+	public void setDeptid(int deptid) {
+		this.deptid = deptid;
+	}
 
 	public Date getCreateddate() {
 		return createddate;
@@ -121,16 +107,4 @@ public class UserDeptEntity {
 				+ ", createddate=" + createddate + ", decreatedby=" + decreatedby + ", role=" + role + "]";
 	}
 
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }

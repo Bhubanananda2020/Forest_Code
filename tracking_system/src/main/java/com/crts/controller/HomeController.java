@@ -1,61 +1,53 @@
 package com.crts.controller;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
 
-import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.crts.config.AssignRequestPDFExporter;
-import com.crts.config.ClosedRequestPDFExporter;
-import com.crts.config.RequestPDFExporter;
-import com.crts.config.UserPDFExporter;
-import com.crts.entity.CommentsEntity;
 import com.crts.entity.CommentsHistory;
 import com.crts.entity.DeptEntity;
 import com.crts.entity.MailResponse;
 import com.crts.entity.RequestEntity;
+import com.crts.entity.ResponseDept;
 import com.crts.entity.StatusEntity;
 import com.crts.entity.StatusEntityview;
 import com.crts.entity.UserDeptEntity;
 import com.crts.entity.UserEntity;
-import com.crts.helper.Message;
-import com.crts.service.CommentsService;
+import com.crts.helper.JwtUtilHelper;
+import com.crts.response.Apiresponse;
 import com.crts.service.DeptService;
 import com.crts.service.RequestService;
 import com.crts.service.StatusService;
 import com.crts.service.UserDeptService;
 import com.crts.service.UserService;
+import com.crts.serviceimpl.CustomUserDetailsService;
 import com.crts.serviceimpl.EmailService;
 
-@Controller
+@RestController
 @RequestMapping("/home")
-@CrossOrigin("*")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class HomeController {
 
 	@Autowired
@@ -74,542 +66,237 @@ public class HomeController {
 	private EmailService service;
 
 	@Autowired
-	private UserDeptService userDeptService;
+	private JwtUtilHelper jwtUtilHelper;
 
 	@Autowired
-	private CommentsService commentsService;
+	private CustomUserDetailsService customUserDetailsService;
 
-	@RequestMapping("/error")
-	public String error(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult, Model model,
-			HttpSession session, HttpServletResponse response) {
-		return "error";
-	}
+	@Autowired
+	private UserDeptService userDeptService;
 
-	/* ===== LOGIN PAGE OR WELCOME PAGE ========= */
-	@RequestMapping("/")
-	public String welcome(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult, Model model,
-			HttpSession session, HttpServletResponse response) {
-		session.invalidate();
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		model.addAttribute("title", "Login - Request Tracking System");
-		return "index";
-	}
-
-	/* ===== LOGIN PAGE OR WELCOME PAGE ========= */
-	@RequestMapping("/index")
-	public String welcomepage(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		session.invalidate();
-		model.addAttribute("title", "Login - Request Tracking System");
-		return "redirect:/home/";
-	}
-
-	@RequestMapping("/logout")
-	public String logout(HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		session.setAttribute("message", new Message("Successfully Logout!!", "alert-danger"));
-		session.invalidate();
-		return "redirect:/home/";
-	}
-
-	/* ===== HOME PAGE ========= */
-	@RequestMapping("user/dashboard")
-	public String dashboard(Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else {
-			model.addAttribute("title", "Home - Request Tracking System");
-
-			int noOfDepartment = this.userDeptService.noOfDepartment((int) session.getAttribute("uid"));
-			int noOfUserInDepartment = this.userDeptService.noOfUserInDepartment((int) session.getAttribute("uid"));
-			int noOfAssignedRequestInDepartment = this.requestService
-					.noOfAssignedRequestInDepartment((int) session.getAttribute("uid"));
-			int noOfRaisedRequestInDepartment = this.requestService
-					.noOfRaisedRequestInDepartment((int) session.getAttribute("uid"));
-
-			model.addAttribute("noofdept", noOfDepartment);
-			model.addAttribute("noofuser", noOfUserInDepartment);
-			model.addAttribute("noofassignreq", noOfAssignedRequestInDepartment);
-			model.addAttribute("noofraisedreq", noOfRaisedRequestInDepartment);
-
-			return "user/dashboardpage";
+	/* ===== lOGIN USER BY USER NAME AND PASSWORD PROCESS ========= */
+	@RequestMapping(value = "/userauthentication", method = RequestMethod.POST)
+	public ResponseEntity<Apiresponse> checklogin(@RequestBody UserEntity userEntity, HttpSession session) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		try {
+			UserEntity isValidUser = this.userService.userValidate(userEntity.getuName(), userEntity.getuPassword());
+			lstue.add(isValidUser);
+			if (isValidUser != null) {
+				UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(userEntity.getuName());
+				responseHeaders.add("authorization", this.jwtUtilHelper.generateToken(userDetails));
+				responseHeaders.add("userrole", this.userDeptService.IsUserAdmin(isValidUser.getuId()));
+				responseHeaders.add("Access-Control-Expose-Headers", "authorization");
+				responseHeaders.add("Access-Control-Expose-Headers", "userrole");
+				ar.setObj(lstue);
+				ar.setStatus(HttpStatus.OK);
+				ar.setMessage("Login Successfully");
+				return ResponseEntity.ok().headers(responseHeaders).body(ar);
+			} else {
+				ar.setObj(null);
+				ar.setStatus(HttpStatus.UNAUTHORIZED);
+				ar.setMessage("Login Failed, Unauthorized user");
+				return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+			}
+		} catch (Exception e) {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something Went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	/* ===== NEW USER PAGE ========= */
-	@RequestMapping("user/createuser")
-	public String createuser(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
+	/* ===== Save New User PROCESS ===== */
+	@RequestMapping(value = "/createuser", method = RequestMethod.POST)
+	public ResponseEntity<Apiresponse> savenewuser(@RequestBody UserEntity userEntity, HttpSession session,
+			HttpServletResponse response, HttpServletRequest request) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equals("supadmin") || userrole.equals("admin")) {
+			try {
+				UserEntity udata = this.userService.getById(userid);
+				long millis = System.currentTimeMillis();
+				java.sql.Date date = new java.sql.Date(millis);
+				Boolean userstatus = Boolean.valueOf(userEntity.isuIsActive());
+				userEntity.setuCDate(date);
+				userEntity.setuCBy(udata.getuFName());
 
-		System.out.println(session.getAttribute("isUserAdmin"));
-
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
+				userEntity.setuIsActive(userstatus);
+				UserEntity isUserSave = this.userService.CreateNewUser(userEntity);
+				lstue.add(isUserSave);
+				if (isUserSave != null) {
+					Map<String, Object> model = new HashMap<>();
+					model.put("UserCreateBy", udata.getuFName());
+					model.put("NewUser", isUserSave.getuName());
+					model.put("NewPassword", userEntity.getuPassword());
+					service.sendNewUserEmail(isUserSave.getuEmail(), model);
+					ar.setObj(lstue);
+					ar.setStatus(HttpStatus.OK);
+					ar.setMessage("User Create Successfully");
+					return ResponseEntity.ok().body(ar);
+				} else {
+					ar.setObj(null);
+					ar.setStatus(HttpStatus.BAD_REQUEST);
+					ar.setMessage("Something went wrong");
+					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+				}
+			} catch (Exception e) {
+				ar.setObj(null);
+				ar.setStatus(HttpStatus.BAD_REQUEST);
+				ar.setMessage("Something went wrong");
+				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+			}
 		} else {
-			model.addAttribute("title", "Add User - Request Tracking System");
-			return "user/createuser";
-		}
-	}
-
-	/* ===== MODIFY USER PAGE ========= */
-	@GetMapping("{uname}/getuserbyuname")
-	public String GetUserByUname(@PathVariable("uname") String uname,
-			@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult, Model model,
-			HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-			UserEntity user = this.userService.validatingUserNameOrEmailid(uname);
-			model.addAttribute("title", "Edit User - Request Tracking System");
-			model.addAttribute("userEntity", user);
-			session.setAttribute("userId", user.getuId());
-			session.setAttribute("userFname", user.getuFName());
-			session.setAttribute("userfullname", user.getuFName() + " " + user.getuLName());
-			session.setAttribute("usercurrpass", user.getuPassword());
-			session.setAttribute("oldcreby", user.getuCBy());
-			session.setAttribute("oldcredt", user.getuCDate());
-
-			return "user/edituser";
-		}
-	}
-
-	/* ===== UPDATE PASSWORD PAGE ========= */
-	@RequestMapping("user/updatepassword")
-	public String validuserfrom(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else {
-			model.addAttribute("title", "Update Password - Request Tracking System");
-			return "user/updatepassword";
-		}
-	}
-
-	/* ===== Reset PASSWORD PAGE ========= */
-	@RequestMapping("user/mypassword")
-	public String updtLoginUserPswd(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-			model.addAttribute("title", "Reset Password - Request Tracking System");
-			return "user/resetpassword";
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 	}
 
 	/* ===== Get ALL USER VIEW PAGE ========= */
-	@RequestMapping("user/getalluser")
-	public String viewalluser(@ModelAttribute("userEntity") UserEntity userEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-			
-			if(session.getAttribute("isUserAdmin").equals("supadmin"))
-			{
+	@GetMapping("/getalluser")
+	public ResponseEntity<Apiresponse> viewalluser(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		UserEntity RequestSenderPerson = this.userService.getById(userid);
+
+		if (userrole.equals("supadmin")) {
+			System.out.println("this is super admin");
 			List<UserEntity> alluser = this.userService.getAllUser();
-			model.addAttribute("title", "Home - Request Tracking System");
-			model.addAttribute("alluser", alluser);
-			return "user/view_userall";
-			}
-			else
-			{
-				List<UserEntity> alluser = this.userService.getAllUserByuIdForAdminView((int) session.getAttribute("uid"));
-				model.addAttribute("title", "Home - Request Tracking System");
-				model.addAttribute("alluser", alluser);
-				return "user/view_userall";
-			}
-		
-		
-		
-		
-		
+			System.out.println(alluser);
+			lstue.add(alluser);
+
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("super admin All User view");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equals("admin")) {
+			System.out.println("this is admin");
+			List<UserEntity> alluser = this.userService.getAllUserByuIdForAdminView(userid);
+			lstue.add(alluser);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("super admin All User view");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 	}
 
-	/* ===== USER ACCESS PAGE ========= */
-	@GetMapping("user/getuseraccess")
-	public String GetUserDeptAccess(@ModelAttribute("userDeptEntity") UserDeptEntity userDeptEntity,
-			BindingResult bindingResult, Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
+	/* ===== GET USER BY ID PAGE ========= */
+	@GetMapping("/getuser/{uName}")
+	public ResponseEntity<Apiresponse> GetUserByUname(@PathVariable("uName") String uName, HttpSession session,
+			HttpServletRequest request, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equals("supadmin") || userrole.equals("admin")) {
+			UserEntity user = this.userService.validatingUserNameOrEmailid(uName);
+			lstue.add(user);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Get Single User Sucessfully");
+			return ResponseEntity.ok().body(ar);
 		} else {
-			List<UserDeptEntity> allRollByUserId = this.userDeptService
-					.getAllRollByUserId((int) session.getAttribute("userId"));
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
+	}
 
-			if (allRollByUserId.isEmpty()) {
-				String flag = "true";
-				model.addAttribute("flag", flag);
+	/* ======== Update user date PROCESS ======== */
+	@PostMapping("/updateusers")
+	public ResponseEntity<Apiresponse> updateUser(@RequestBody UserEntity userEntity, HttpSession session,
+			HttpServletResponse response, HttpServletRequest request) {
+
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		UserEntity oldUserData = this.userService.validatingUserNameOrEmailid(userEntity.getuEmail());
+		userEntity.setuId(oldUserData.getuId());
+		userEntity.setuCBy(oldUserData.getuCBy());
+		userEntity.setuCDate(oldUserData.getuCDate());
+		if (userEntity.getuPassword() == null || userEntity.getuPassword().isEmpty()) {
+			userEntity.setuPassword(oldUserData.getuPassword());
+		}
+		UserEntity updateUserData = this.userService.CreateNewUser(userEntity);
+
+		if (updateUserData != null) {
+			lstue.add(updateUserData);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("UpdateUser Sucessfully");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== UPDATE PASSWORD PAGE ========= */
+	@GetMapping("/updatepassword")
+	public ResponseEntity<Apiresponse> validuserfrom(@RequestBody UserEntity userEntity, HttpSession session,
+			HttpServletRequest request, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		UserEntity ue = this.userService.validatingUserNameOrEmailid(userEntity.getuEmail());
+		if (ue != null) {
+			ue.setuPassword(userEntity.getuPassword());
+			boolean isPasswordUpdate = this.userService.updatePassword(ue);
+
+			if (isPasswordUpdate) {
+				lstue.add(ue);
+				ar.setObj(lstue);
+				ar.setStatus(HttpStatus.OK);
+				ar.setMessage("Password Update Successfully");
+				return ResponseEntity.ok().body(ar);
 			} else {
-				String flag = "False";
-				model.addAttribute("flag", flag);
+				ar.setObj(null);
+				ar.setStatus(HttpStatus.BAD_REQUEST);
+				ar.setMessage("Something Went wrong");
+				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 			}
-			List<DeptEntity> deptCodeList = this.deptService.getAllDept();
-			model.addAttribute("deptCodeList", deptCodeList);
-			model.addAttribute("allRollByUserId", allRollByUserId);
-			long millis = System.currentTimeMillis();
-			java.sql.Date date = new java.sql.Date(millis);
-			session.setAttribute("curdate", date);
-			return "user/user_dept_access";
-		}
-	}
-
-	/* ===== MY PROFILE PAGE ========= */
-	@RequestMapping("user/myprofile")
-	public String myprofilepage(Model model, HttpSession session, HttpServletResponse response) {
-		model.addAttribute("title", "My Profile - Request Tracking System");
-		model.addAttribute("ue", session.getAttribute("isValidUser"));
-		return "user/myprofile";
-	}
-
-	/* ===== SELECT DEPARTMENT PAGE ========= */
-	@RequestMapping("user/selectdepartment")
-	public String selectdepartment(@ModelAttribute("deptEntity") DeptEntity deptEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
 		} else {
-			if (session.getAttribute("isUserAdmin").equals("admin")) {
-				model.addAttribute("title", "Select Department - Request Tracking System");
-				List<String> allAdminDepartment = this.userDeptService
-						.AllAdminDepartment((int) session.getAttribute("uid"));
-				model.addAttribute("allAdminDepartment", allAdminDepartment);
-				session.setAttribute("allAdminDepartment", allAdminDepartment);
-				return "user/listofdepartment";
-			} else if (session.getAttribute("isUserAdmin").equals("supadmin")) {
-				System.out.println("sup add");
-				model.addAttribute("title", "Select Department - Request Tracking System");
-				List<String> allAdminDepartment = this.userDeptService.AllSupAdminDepartment();
-				model.addAttribute("allAdminDepartment", allAdminDepartment);
-				session.setAttribute("allAdminDepartment", allAdminDepartment);
-				return "user/selectdepartmentsup";
-			} else {
-				session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-				return "user/dashboardpage";
-			}
-
-		}
-
-	}
-
-	/* ===== ADD DEPARTMENT PAGE ========= */
-	@RequestMapping("user/createdepartment")
-	public String createdepartment(@ModelAttribute("deptEntity") DeptEntity deptEntity, BindingResult bindingResult,
-			@RequestParam("depcode") String depcode, Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-
-			model.addAttribute("title", "Child Department - Request Tracking System");
-			session.setAttribute("depcode", depcode);
-			return "user/createdepartment";
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Invalid Email Address!!");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	/* ===== VIEW ALL DEPARTMENT PAGE ========= */
-	@GetMapping("user/getalldepartmentlist")
-	public String GetAllDepartment(@ModelAttribute("deptEntity") DeptEntity deptEntity, BindingResult bindingResult,
-			Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-
-			if (session.getAttribute("isUserAdmin").equals("admin")) {
-				List<DeptEntity> allDept = this.deptService.getAllDeptAdmin((int) session.getAttribute("uid"));
-				model.addAttribute("allDept", allDept);
-				return "user/view_alldepartment";
-			} else {
-				List<DeptEntity> allDept = this.deptService.getAllDept();
-				model.addAttribute("allDept", allDept);
-				return "user/view_alldepartment";
-
-			}
-		}
-	}
-
-	/* ===== ADD REQUEST PAGE ========= */
-	@RequestMapping("user/createrequest")
-	public String addrequestpage(@ModelAttribute("requestEntity") RequestEntity requestEntity,
-			BindingResult bindingResult, Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else {
-			List<String> deptCodeList = this.deptService.getAllDeptCode();
-			model.addAttribute("deptCodeList", deptCodeList);
-			model.addAttribute("title", "Add Request - Request Tracking System");
-			return "user/createrequest";
-		}
-	}
-
-	/* ===== VIEW REQUEST PAGE ========= */
-	@RequestMapping("user/viewrequest")
-	public String viewallreq(Model model, HttpSession session, HttpServletResponse response) {
-
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else {
-			List<StatusEntityview> allarrisestatus = this.statusService
-					.getAllArrisedLastUpdateRequest((int) session.getAttribute("uid"));
-			List<StatusEntityview> allassignstatus = this.statusService
-					.getAllAssignLastUpdateRequest((int) session.getAttribute("uid"));
-			List<StatusEntityview> allarriseclosedstatus = this.statusService
-					.getAllArrisedClosedRequest((int) session.getAttribute("uid"));
-
-			model.addAttribute("title", "View All - Request Track	ing System");
-			model.addAttribute("allassignstatus", allassignstatus);
-			model.addAttribute("allarrisestatus", allarrisestatus);
-			model.addAttribute("allarriseclosedstatus", allarriseclosedstatus);
-			return "user/view_userrequest";
-		}
-	}
-
-	/* ===== VIEW Admin or Super Admin REQUEST PAGE ========= */
-	@RequestMapping("user/adminviewrequest")
-	public String adminviewallreq(Model model, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else {
-
-			System.out.println(session.getAttribute("isUserAdmin"));
-
-			List<StatusEntityview> allraisestatusadmin = this.statusService
-					.getAllRaisedLastUpdateRequestforadmin((int) session.getAttribute("uid"));
-			List<StatusEntityview> allassignstatusadmin = this.statusService
-					.getAllAssignLastUpdateRequestforadmin((int) session.getAttribute("uid"));
-			List<StatusEntityview> allarriseclosedstatusadmin = this.statusService
-					.getAllRaisedClosedRequestforadmin((int) session.getAttribute("uid"));
-
-			model.addAttribute("title", "Admin View - Request Track	ing System");
-			model.addAttribute("allraisestatusadmin", allraisestatusadmin);
-			model.addAttribute("allassignstatusadmin", allassignstatusadmin);
-			model.addAttribute("allarriseclosedstatusadmin", allarriseclosedstatusadmin);
-			System.out.println("===================");
-			return "user/viewrequestadmin";
-		}
-	}
-
-	/* ===== MODIFY REQUEST PAGE ========= */
-	@GetMapping("{rcode}/getrequestbycode")
-	public String GetRequestByreqcode(@PathVariable("rcode") String rcode,
-			@ModelAttribute("requestEntity") RequestEntity requestEntity, BindingResult bindingResult, Model model,
+	/* ===== Reset PASSWORD PAGE ========= */
+	@GetMapping("/resetpassword")
+	public ResponseEntity<Apiresponse> updtLoginUserPswd(@RequestBody UserEntity userEntity, HttpServletRequest request,
 			HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else {
-
-			RequestEntity getReuestEntity = this.requestService.getRequestByReqcode(rcode);
-
-			if (session.getAttribute("uid").equals(getReuestEntity.getReqassignto())
-					|| session.getAttribute("uid").equals(getReuestEntity.getRecreatedby())) {
-				System.out.println("++++INSIDE REQUEST EDIT+++++++");
-
-				model.addAttribute("requestEntity", getReuestEntity);
-				session.setAttribute("assigndate", getReuestEntity.getReqassigndate());
-				session.setAttribute("prevassigndepartmentcode", getReuestEntity.getReqdeptcode());
-				session.setAttribute("reqinicomment1", getReuestEntity.getReqinicomment());
-				session.setAttribute("reqcreateby", getReuestEntity.getRecreatedby());
-				session.setAttribute("reqprevid", getReuestEntity.getReqid());
-				List<String> deptCodeList = this.deptService.getAllDeptCode();
-				model.addAttribute("deptCodeList", deptCodeList);
-				UserEntity byId = this.userService.getById(getReuestEntity.getReqassignto());
-				model.addAttribute("prevusedata", byId.getuFName());
-				List<CommentsHistory> allCommentHistory = this.requestService.getAllCommentByReqId(rcode);
-				StatusEntity entity = this.statusService.getStatusByRequestNumber(getReuestEntity.getReqid());
-				String prevstdesc = entity.getSestdesc();
-				model.addAttribute("prevstdesc", prevstdesc);
-				model.addAttribute("allCommentHistory", allCommentHistory);
-				return "user/editrequest";
-			} else {
-				session.setAttribute("message", new Message("You are not a Valid User!!", "alert-danger"));
-				return "redirect:/home/index";
-			}
-
-		}
-	}
-
-	/* ===== Add New Comment REQUEST Comment PAGE ========= */
-	@GetMapping("{rcode}/getrequestbycodeforcomment")
-	public String GetRequestByReqCodeForComment(@PathVariable("rcode") String rcode,
-			@ModelAttribute("requestEntity") RequestEntity requestEntity, BindingResult bindingResult, Model model,
-			HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/index";
-		} else {
-			RequestEntity getReuestEntity = this.requestService.getRequestByReqcode(rcode);
-			model.addAttribute("requestEntity", getReuestEntity);
-			String reqinicomment1 = getReuestEntity.getReqinicomment();
-			session.setAttribute("reqinicomment1", reqinicomment1);
-			List<String> deptCodeList = this.deptService.getAllDeptCode();
-			model.addAttribute("deptCodeList", deptCodeList);
-			return "user/commentrequest";
-		}
-	}
-
-	/* ===== lOGIN USER BY USER NAME AND PASSWORD PROCESS ========= */
-	@RequestMapping(value = "/loginProcess", method = RequestMethod.POST)
-	public String checklogin(@Valid UserEntity userEntity, BindingResult bindingResult, Model model, Errors errors,
-			@RequestParam("uName") String username, @RequestParam("uPassword") String password, HttpSession session,
-			HttpServletResponse response) {
-		try {
-			if (errors.hasErrors()) {
-				session.setAttribute("message", new Message("Invalid UserId or Password!!", "alert-danger"));
-				return "redirect:/home/";
-			} else {
-				UserEntity isValidUser = this.userService.userValidate(username, password);
-				if (isValidUser != null) {
-					session.setAttribute("isValidUser", isValidUser);
-					session.setAttribute("username", isValidUser.getuFName());
-					session.setAttribute("uid", isValidUser.getuId());
-					String isUserAdmin = this.userDeptService.IsUserAdmin(isValidUser.getuId());
-					session.setAttribute("isUserAdmin", isUserAdmin);
-					return "redirect:/home/user/dashboard";
-				} else {
-					session.setAttribute("message", new Message("Invalid UserId or Password!!", "alert-danger"));
-					return "/index";
-				}
-			}
-		} catch (Exception e) {
-			session.setAttribute("message", new Message("Invalid UserId or Password !!", "alert-danger"));
-			return "/index";
-		}
-	}
-
-	/* ===== CHANGING PASSWORD PROCESS========= */
-	@PostMapping("/updatepwProcess")
-	public String changepw(@Valid UserEntity userEntity, BindingResult bindingResult, Errors errors,
-			@RequestParam("uPassword") String password, @RequestParam("uName") String username, HttpSession session,
-			HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			return "redirect:/home/";
-		} else {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equals("supadmin") || userrole.equals("admin")) {
 			try {
-				if (errors.hasErrors()) {
-					return "user/updatepassword";
-				} else {
-					UserEntity ue = new UserEntity();
-					ue = this.userService.validatingUserNameOrEmailid(username);
-					if (ue != null) {
-						ue.setuPassword(password);
-						boolean isPasswordUpdate = this.userService.updatePassword(ue);
-						if (isPasswordUpdate) {
-							session.setAttribute("message", new Message("Password update !!", "alert-success"));
-							return "user/updatepassword";
-						} else {
-							session.setAttribute("message", new Message("Invalid Email Address !!", "alert-danger"));
-							return "user/updatepassword";
-						}
-					} else {
-						errors.hasErrors();
-						session.setAttribute("message", new Message("Invalid Password !!", "alert-danger"));
-						return "user/updatepassword";
-					}
-				}
-			} catch (Exception e) {
-				session.setAttribute("message", new Message("Invalid UserId or Password !!", "alert-danger"));
-				errors.hasErrors();
-				return "user/updatepassword";
-			}
-		}
-	}
-
-	/* ===== RESET PASSWORD PROCESS========= */
-	@PostMapping("/resetpasswordprocess")
-	public String resetpw(@RequestParam("uName") String username, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-			try {
-				UserEntity ue = new UserEntity();
-				ue = this.userService.validatingUserNameOrEmailid(username);
+				UserEntity ue = this.userService.validatingUserNameOrEmailid(userEntity.getuEmail());
 				if (ue != null) {
-					String capitalCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-					String lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
-					String specialCharacters = "!@#$";
-					String numbers = "1234567890";
-					String combinedChars = capitalCaseLetters + lowerCaseLetters + specialCharacters + numbers;
-					Random random = new Random();
-					char[] password = new char[8];
-					password[0] = lowerCaseLetters.charAt(random.nextInt(lowerCaseLetters.length()));
-					password[1] = capitalCaseLetters.charAt(random.nextInt(capitalCaseLetters.length()));
-					password[2] = specialCharacters.charAt(random.nextInt(specialCharacters.length()));
-					password[3] = numbers.charAt(random.nextInt(numbers.length()));
-					for (int i = 4; i < 8; i++) {
-						password[i] = combinedChars.charAt(random.nextInt(combinedChars.length()));
-					}
-					String newPassword = String.valueOf(password);
+					String newPassword = this.userService.getNewPassword();
 					ue.setuPassword(newPassword);
 					boolean isPasswordUpdate = this.userService.updatePassword(ue);
 					if (isPasswordUpdate) {
@@ -618,436 +305,644 @@ public class HomeController {
 						model.put("reqtitle", "Your password is reset");
 						model.put("reqmessage", newPassword);
 						MailResponse emailw = service.sendResetPasswordEmail(ue.getuEmail(), model);
-						session.setAttribute("message",
-								new Message(
-										"Password reset !! New Password has been sent to the provided Email Address",
-										"alert-success"));
-						return "redirect:/home/user/mypassword";
+						lstue.add(ue);
+						ar.setObj(lstue);
+						ar.setStatus(HttpStatus.OK);
+						ar.setMessage("Password reset !! New Password has been sent to the provided Email Address");
+						return ResponseEntity.ok().body(ar);
 					} else {
-						session.setAttribute("message", new Message("Password not update !!", "alert-danger"));
-						return "user/mypassword";
+						ar.setObj(null);
+						ar.setStatus(HttpStatus.BAD_REQUEST);
+						ar.setMessage("Password not update !!");
+						return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 					}
 				} else {
-					session.setAttribute("message", new Message("Invalid UserId or Email !!", "alert-danger"));
-					return "user/mypassword";
+					ar.setObj(null);
+					ar.setStatus(HttpStatus.BAD_REQUEST);
+					ar.setMessage("Password not update !!Invalid Username or Email Address !!");
+					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 				}
 			} catch (Exception e) {
-				session.setAttribute("message", new Message("Invalid UserId or Email !!", "alert-danger"));
-				return "user/mypassword";
+				ar.setObj(null);
+				ar.setStatus(HttpStatus.BAD_REQUEST);
+				ar.setMessage("Password not update !! Something went worng, Please try again  !!");
+				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 			}
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 
+	}
+
+	
+	@GetMapping("/getalldeptpermissionforuser/{uid}")
+	public List<UserDeptEntity> getAllDeptpermission(@PathVariable("uid") int uid) {
+		List<UserDeptEntity> list = this.userDeptService.getAllRollByUserId(uid);
+		return list;
+	}
+	
+	
+	
+	/* ======== Save list of Department user role ======== */
+	@PostMapping(path = "/saveuserrole")
+	public ResponseEntity<Apiresponse> SaveUserDeptRole(@RequestBody List<UserDeptEntity> userDeptEntity,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
+
+		System.out.println(userDeptEntity);
+
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+//		int DUDA = this.userDeptService.DeleteUserDeptAccess((int) session.getAttribute("userId"));
+
+		UserDeptEntity entity = null;
+		entity = this.userDeptService.saveUserDeptAccess(userDeptEntity, userid);
+
+		lstue.add(null);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("Password reset !! New Password has been sent to the provided Email Address");
+		return ResponseEntity.ok().body(ar);
+	}
+
+	/* ===== SELECT DEPARTMENT PAGE ========= */
+	@GetMapping("/selectdepartment")
+	public ResponseEntity<Apiresponse> selectdepartment(HttpSession session, HttpServletRequest request,
+			HttpServletResponse response) {
+
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		if (userrole.equals("supadmin")) {
+			List<DeptEntity> allAdminDepartment = this.deptService.getAllDept();
+			lstue.add(allAdminDepartment);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Select Department for Super Admin Successfully");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equals("admin")) {
+
+			List<DeptEntity> allAdminDepartment = this.userDeptService.AllAdminDepartment(userid);
+			lstue.add(allAdminDepartment);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Select Department for Admin Successfully");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
 	}
 
 	/* ===== Save Department PROCESS ===== */
-	@PostMapping("/savedeptprocess")
-	public String savedept(@Valid DeptEntity deptEntity, Errors errors, @RequestParam("decode") String dcode,
-			@RequestParam("dename") String dname, @RequestParam("depcode") String dpcode,
-			@RequestParam("deisactive") String diact, HttpSession session, HttpServletResponse response) {
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-			try {
-				int createby = (int) session.getAttribute("uid");
-				if (errors.hasErrors()) {
-					return "user/createdepartment";
-				} else {
+	@PostMapping("/createdept")
+	public ResponseEntity<Apiresponse> savedept(@RequestBody DeptEntity deptEntity, HttpSession session,
+			HttpServletRequest request, HttpServletResponse response) {
 
-					if (session.getAttribute("isUserAdmin").equals("supadmin")) {
-						boolean flagcheck = false;
-						List<String> list = this.userDeptService.AllSupAdminDepartment();
-						for (String alldept : list) {
-							if (alldept.equalsIgnoreCase(dpcode)) {
-								flagcheck = true;
-							}
-						}
+		System.out.println();
+		System.out.println(deptEntity);
+		System.out.println();
 
-						if (flagcheck) {
-							boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
-									diact);
-							if (isDepartmentSave) {
-								session.setAttribute("message",
-										new Message("Department Save Successfully !!", "alert-success"));
-								return "redirect:/home/user/getalldepartmentlist";
-							} else {
-								session.setAttribute("message",
-										new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-								return "redirect:user/getalldepartmentlist";
-							}
-						} else if (dcode.equalsIgnoreCase(dpcode)) {
-							boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
-									diact);
-							if (isDepartmentSave) {
-								session.setAttribute("message",
-										new Message("Department Save Successfully !!", "alert-success"));
-								return "redirect:/home/user/getalldepartmentlist";
-							} else {
-								session.setAttribute("message",
-										new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-								return "redirect:user/getalldepartmentlist";
-							}
-						} else {
-							session.setAttribute("message",
-									new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-							return "redirect:user/getalldepartmentlist";
-						}
-					}
+		Apiresponse ar = new Apiresponse();
+		DeptEntity isDepartmentSave = new DeptEntity();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		deptEntity.setDecreatedby(userid);
 
-					else {
-						boolean isDepartmentSave = this.deptService.saveDepartment(dcode, dname, dpcode, createby,
-								diact);
-						if (isDepartmentSave) {
-							session.setAttribute("message",
-									new Message("Department Save Successfully !!", "alert-success"));
-							return "redirect:/home/user/getalldepartmentlist";
-						} else {
-							session.setAttribute("message",
-									new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-							return "redirect:user/getalldepartmentlist";
-						}
+		if (userrole.equals("supadmin")) {
+			boolean flagcheck = false;
+			List<DeptEntity> list = this.deptService.getAllDept();
 
-					}
-
+			for (DeptEntity alldept : list) {
+				if (alldept.getDecode().equalsIgnoreCase(deptEntity.getDepcode())) {
+					flagcheck = true;
 				}
-			} catch (Exception e) {
-				session.setAttribute("message", new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-				errors.hasErrors();
-				return "redirect:user/getalldepartmentlist";
 			}
+			if (flagcheck) {
+				isDepartmentSave = this.deptService.saveDepartment(deptEntity);
+				if (isDepartmentSave != null) {
+					lstue.add(isDepartmentSave);
+					ar.setObj(lstue);
+					ar.setStatus(HttpStatus.OK);
+					ar.setMessage("Department Create Successfully");
+					return ResponseEntity.ok().body(ar);
+				} else {
+					ar.setObj(null);
+					ar.setStatus(HttpStatus.BAD_REQUEST);
+					ar.setMessage("Something went wrong");
+					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+				}
+			} else if (deptEntity.getDecode().equalsIgnoreCase(deptEntity.getDepcode())) {
+				isDepartmentSave = this.deptService.saveDepartment(deptEntity);
+				if (isDepartmentSave != null) {
+					lstue.add(isDepartmentSave);
+					ar.setObj(lstue);
+					ar.setStatus(HttpStatus.OK);
+					ar.setMessage("Department Create Successfully");
+					return ResponseEntity.ok().body(ar);
+				} else {
+					ar.setObj(null);
+					ar.setStatus(HttpStatus.BAD_REQUEST);
+					ar.setMessage("Something went wrong");
+					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				System.out.println("3");
+				ar.setObj(null);
+				ar.setStatus(HttpStatus.BAD_REQUEST);
+				ar.setMessage("Invalid Data, Department Not Save !!");
+				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+			}
+		} else if (userrole.equals("admin")) {
+			isDepartmentSave = this.deptService.saveDepartment(deptEntity);
+			if (isDepartmentSave != null) {
+				lstue.add(isDepartmentSave);
+				ar.setObj(lstue);
+				ar.setStatus(HttpStatus.OK);
+				ar.setMessage("Department Create Successfully");
+				return ResponseEntity.ok().body(ar);
+			} else {
+				ar.setObj(null);
+				ar.setStatus(HttpStatus.BAD_REQUEST);
+				ar.setMessage("Something went wrong");
+				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+			}
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 	}
 
-	/* ===== Generate New Request PROCESS ===== */
+	/* ===== VIEW ALL DEPARTMENT PAGE ========= */
+	@GetMapping("/getalldepartmentlist")
+	public ResponseEntity<Apiresponse> GetAllDepartment(HttpSession session, HttpServletRequest request,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equals("supadmin")) {
+			List<DeptEntity> allDept = this.deptService.getAllDept();
+			lstue.add(allDept);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin Department View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equals("admin")) {
+			List<DeptEntity> allDept = this.deptService.getAllDeptAdmin(userid);
+			lstue.add(allDept);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin Department View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
+	}
+
+	/* ===== GET ALL DEPARTMENT CODE LIST ========= */
+	@GetMapping("/getalldepartmentcodelist")
+	public ResponseEntity<Apiresponse> getAllDepartmentCodeList(HttpSession session, HttpServletRequest request,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		List<String> deptCodeList = this.deptService.getAllDeptCode();
+		if (deptCodeList != null) {
+			lstue.add(deptCodeList);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("gettting the Department code List Successfully !!");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== Get User By DeptID ===== */
+	@GetMapping("/getuserbydeptcode/{deptcode}")
+	public ResponseEntity<Apiresponse> getUserByDeptID(@PathVariable("deptcode") String deptcode,
+			HttpServletRequest request) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		int a = this.deptService.getDeptIDByDeptCode(deptcode);
+		List<Object[]> list = this.userDeptService.getAllUserByDeptid(a);
+		List<UserEntity> ue = new ArrayList<UserEntity>();
+
+		for (Object[] obj : list) {
+			int id = (int) obj[0];
+			String name = (String) obj[1];
+			String role = ((String) obj[2]);
+			if (!role.equalsIgnoreCase("no permission")) {
+				UserEntity ue1 = new UserEntity(id, name);
+				ue.add(ue1);
+			}
+		}
+		lstue.add(ue);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("gettting the User List Successfully !!");
+		return ResponseEntity.ok().body(ar);
+
+	}
+
+	/* ===== Get Dept By Deptcode ===== */
+	@GetMapping("/getdeptbydeptcode/{deptcode}")
+	public ResponseEntity<Apiresponse> getDeptByDeptCode(@PathVariable("deptcode") String deptcode,
+			HttpServletRequest request) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		DeptEntity deptEntity = this.deptService.getDeptByDeptCode(deptcode);		
+		lstue.add(deptEntity);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("gettting the User List Successfully !!");
+		return ResponseEntity.ok().body(ar);
+	}
+
+	/* ===== Generate New Request ===== */
 	@PostMapping("/generaterequest")
-	public String saveRequest(@Valid RequestEntity requestEntity, Errors errors,
-			@RequestParam("reqtitle") String reqtitle, @RequestParam("reqdesc") String reqdesc,
-			@RequestParam("piority") int piority, @RequestParam("severity") int severity,
-			@RequestParam("reqdeptcode") String reqtodepart, @RequestParam("reqassignto") int reqtoperson,
-			@RequestParam("reqinicomment") String reqfstcomment, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
+	public ResponseEntity<Apiresponse> saveRequest(@RequestBody RequestEntity requestEntity, HttpSession session,
+			HttpServletRequest request, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		String getNewRequestNum = requestEntity.getReqdeptcode()
+				+ this.requestService.getLastRequestNumberByDeptId(requestEntity.getReqdeptcode());
+		requestEntity.setRecreatedby(userid);
+		requestEntity.setReqcode(getNewRequestNum);
+		RequestEntity isRequestSave = this.requestService.saveRequest(requestEntity);
+		if (isRequestSave != null) {
+			UserEntity uedata = this.userService.getById(requestEntity.getReqassignto());
+			String RequestPersonEmailId = uedata.getuEmail();
+			UserEntity RequestSenderPerson = this.userService.getById(userid);
+			Map<String, Object> model = new HashMap<>();
+			model.put("Requestby", RequestSenderPerson.getuFName());
+			model.put("reqno", getNewRequestNum);
+			model.put("reqtitle", requestEntity.getReqtitle());
+			model.put("reqmessage", requestEntity.getReqdesc());
+			System.out.println(RequestPersonEmailId);
+			service.sendRequestEmail(RequestPersonEmailId, model);
+			lstue.add(isRequestSave);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Request Generate Successfully !! Your Request Refernece No : " + getNewRequestNum);
+			return ResponseEntity.ok().body(ar);
 		} else {
-			try {
-				if (errors.hasErrors()) {
-					return "user/createrequest";
-				} else {
-
-					int createby = (int) session.getAttribute("uid");
-					String getNewRequestNum1 = this.requestService.getLastRequestNumberByDeptId(reqtodepart);
-					String getNewRequestNum = reqtodepart + getNewRequestNum1;
-
-					boolean isRequestSave = this.requestService.saveRequest(reqtitle, reqdesc, getNewRequestNum,
-							reqtodepart, reqtoperson, reqfstcomment, createby, piority, severity);
-					if (isRequestSave) {
-						session.setAttribute("message", new Message(
-								"Request Generate Successfully !! Your Request Refernece No : " + getNewRequestNum,
-								"alert-success"));
-						UserEntity uedata = this.userService.getById(reqtoperson);
-						String RequestPersonEmailId = uedata.getuEmail();
-						Map<String, Object> model = new HashMap<>();
-						model.put("Requestby", session.getAttribute("username"));
-						model.put("reqno", getNewRequestNum);
-						model.put("reqtitle", reqtitle);
-						model.put("reqmessage", reqdesc);
-						System.out.println(RequestPersonEmailId);
-						service.sendRequestEmail(RequestPersonEmailId, model);
-						return "redirect:user/createrequest";
-					} else {
-						session.setAttribute("message",
-								new Message("Request Generate Fail !! Please try Againg", "alert-danger"));
-						return "redirect:user/createrequest";
-					}
-				}
-			} catch (Exception e) {
-				session.setAttribute("message", new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-				errors.hasErrors();
-				return "user/createrequest";
-			}
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong,Please try again !!");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	/* ===== MAIL SERVICE ========= */
-	@PostMapping("/sendingEmail")
-	public MailResponse sendEmail(@RequestParam("to") String to) {
-		Map<String, Object> model = new HashMap<>();
-		model.put("Name", "Admin");
-		model.put("location", "odisha,India");
-
-		return service.sendRequestEmail(to, model);
-
+	
+	
+	/* ===== VIEW REQUEST PAGE Super admin allarrisestatus ========= */
+	@GetMapping("/viewallrequest/allarrisestatus")
+	public ResponseEntity<Apiresponse> viewallreqallarrisestatus(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allarrisestatus = this.statusService.getAllRaisedLastUpdateRequestforsuperadmin();
+			lstue.add(allarrisestatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllRaisedClosedRequestforadmin(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
 	}
 
+	/* ===== VIEW REQUEST PAGE Super admin allassignstatus ========= */
+	@GetMapping("/viewallrequest/allassignstatus")
+	public ResponseEntity<Apiresponse> viewallreqallassignstatus(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allassignstatus = this.statusService.getAllAssignLastUpdateRequestforsuperadmin();
+			lstue.add(allassignstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService
+					.getAllAssignLastUpdateRequestforadmin(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE Super admin allarriseclosedstatus ========= */
+	@GetMapping("/viewallrequest/allarriseclosedstatus")
+	public ResponseEntity<Apiresponse> viewallreqallarriseclosedstatus(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllRaisedClosedRequestforsuperadmin();
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService
+					.getAllRaisedLastUpdateRequestforadmin(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE user allarrisestatus ========= */
+	@GetMapping("/viewallrequest/allraisestatususer")
+	public ResponseEntity<Apiresponse> viewallallarrisestatususers(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allraisestatususer = this.statusService.getAllArrisedLastUpdateRequest(userid);
+			lstue.add(allraisestatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allraisestatususer = this.statusService.getAllArrisedLastUpdateRequest(userid);
+			lstue.add(allraisestatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("user")) {
+			List<StatusEntityview> allraisestatususer = this.statusService.getAllArrisedLastUpdateRequest(userid);
+			lstue.add(allraisestatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		}
+
+		else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE user allassignstatus ========= */
+	@GetMapping("/viewallrequest/allassignstatussususer")
+	public ResponseEntity<Apiresponse> viewallallassignstatususers(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allassignstatususer = this.statusService.getAllAssignLastUpdateRequest(userid);
+			lstue.add(allassignstatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allassignstatususer = this.statusService.getAllAssignLastUpdateRequest(userid);
+			lstue.add(allassignstatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("user")) {
+			List<StatusEntityview> allassignstatususer = this.statusService.getAllAssignLastUpdateRequest(userid);
+			lstue.add(allassignstatususer);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		}
+
+		else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST PAGE user allarriseclosedstatus ========= */
+	@GetMapping("/viewallrequest/allarriseclosedstatususer")
+	public ResponseEntity<Apiresponse> viewallarriseclosedstatususers(HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		if (userrole.equalsIgnoreCase("supadmin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Super Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("admin")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else if (userrole.equalsIgnoreCase("user")) {
+			List<StatusEntityview> allarriseclosedstatus = this.statusService.getAllArrisedClosedRequest(userid);
+			lstue.add(allarriseclosedstatus);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		}
+
+		else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== VIEW REQUEST BY REQUEST CODE PAGE ========= */
+	@GetMapping("getrequestbycode/{rcode}")
+	public ResponseEntity<Apiresponse> GetRequestByreqcode(@PathVariable("rcode") String rcode,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		UserEntity RequestSenderPerson = this.userService.getById(userid);
+
+		RequestEntity getReuestEntity = this.requestService.getRequestByReqcode(rcode);
+
+		if ((userid == getReuestEntity.getReqassignto()) || (userid == getReuestEntity.getRecreatedby())
+				|| (userrole.equalsIgnoreCase("admin")) || (userrole.equalsIgnoreCase("supadmin"))) {
+			System.out.println("++++INSIDE REQUEST EDIT+++++++");
+			lstue.add(getReuestEntity);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
+	}
+
+	
+	
+	
+	
+	
+	
+	
 	/* ===== MODIFY REQUEST PROCESS========= */
 	@PostMapping("/updaterequest")
-	public String updateRequest(@Valid RequestEntity requestEntity, Errors errors, @RequestParam("reqid") int reqid,
-			@RequestParam("reqcode") String reqcode, @RequestParam("reqtitle") String reqtitle,
-			@RequestParam("piority") int piority, @RequestParam("severity") int severity,
-			@RequestParam("reqdesc") String reqdesc, @RequestParam("reqdeptcode") String reqtodepart,
-			@RequestParam("reqassignto") int reqtoperson, @RequestParam("reqinicomment") String reqfstcomment,
-			@RequestParam("sestdesc") String reqstatus, HttpSession session, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
+	public ResponseEntity<Apiresponse> updateRequest(@RequestBody RequestEntity requestEntity,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		StatusEntity statusEntity = new StatusEntity();
+		statusEntity.setSestdesc(requestEntity.getStatusEntity().get(0).getSestdesc());
+
+		RequestEntity updateRequest = this.requestService.updateRequest(requestEntity, statusEntity, userid);
+		if (updateRequest != null) {
+			lstue.add(updateRequest);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Admin all request View");
+			return ResponseEntity.ok().body(ar);
 		} else {
-			try {
-				long millis = System.currentTimeMillis();
-				java.sql.Date date = new java.sql.Date(millis);
-				char stuscod = reqstatus.charAt(0);
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.UNAUTHORIZED);
+			ar.setMessage("You are not a valid User");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
+		}
 
-				if (errors.hasErrors()) {
-					return "redirect:/home/user/dashboard";
-				} else {
-					CommentsEntity ce = new CommentsEntity();
-					ce.setCmdesc(reqfstcomment);
-					ce.setCmreqdate(date);
-					ce.setCmreqcreateby((int) session.getAttribute("uid"));
-					StatusEntity se = new StatusEntity();
-					se.setSescode(stuscod);
-					se.setSestdesc(reqstatus);
-					se.setReqdate(date);
-					se.setReqcreateby((int) session.getAttribute("uid"));
-					RequestEntity re = new RequestEntity();
-					List<StatusEntity> selist = new ArrayList<StatusEntity>();
-					List<CommentsEntity> celist = new ArrayList<CommentsEntity>();
-					re.setReqid((int) session.getAttribute("reqprevid"));
-					re.setReqdeptcode(reqtodepart);
-					if (reqtodepart.equalsIgnoreCase((String) session.getAttribute("prevassigndepartmentcode"))) {
-						re.setReqcode(reqcode);
-					} else {
-						String getNewRequestNum1 = this.requestService.getLastRequestNumberByDeptId(reqtodepart);
-						String getNewRequestNum = reqtodepart + getNewRequestNum1;
-						re.setReqcode(getNewRequestNum);
-					}
+	}
 
-					re.setReqtitle(reqtitle);
-					re.setReqdesc(reqdesc);
-					re.setPiority(piority);
-					re.setSeverity(severity);
-					re.setReqassigndate((Date) session.getAttribute("assigndate"));
-					re.setReqassignto(reqtoperson);
-					re.setReqinicomment((String) session.getAttribute("reqinicomment1"));
-					re.setRecreatedby((int) session.getAttribute("reqcreateby"));
-					selist.add(se);
-					celist.add(ce);
-					re.setStatusEntity(selist);
-					re.setcCommentsEntity(celist);
-					se.setRequestEntity(re);
-					ce.setRequestEntity(re);
-
-					RequestEntity entity = this.requestService.updateRequest(re);
-
-					if (entity != null) {
-						if (reqstatus.equals("CLOSE REQUEST")) {
-							UserEntity byId = this.userService.getById((int) session.getAttribute("reqcreateby"));
-							Map<String, Object> model = new HashMap<>();
-							model.put("Requestby", session.getAttribute("username"));
-							model.put("reqno", reqcode);
-							model.put("reqtitle", reqtitle);
-							model.put("reqmessage", "Your request is closed");
-
-							MailResponse emailw = service.sendResetPasswordEmail(byId.getuEmail(), model);
-							System.out.println("Mail sent " + byId.getuEmail());
-						}
-
-						session.setAttribute("message",
-								new Message("Request Update Successfully !! Your Request Refernece No : " + reqcode,
-										"alert-success"));
-						return "redirect:user/viewrequest";
-					} else {
-						session.setAttribute("message",
-								new Message("Request Update Fail !! Please try Againg ", "alert-danger"));
-						return "redirect:/home/user/dashboard";
-					}
-				}
-			} catch (Exception e) {
-				System.out.println(e);
-				session.setAttribute("message", new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-				errors.hasErrors();
-				return "redirect:/home/user/dashboard";
-			}
+	/* ===== Get REQUEST Comment History========= */
+	@GetMapping("getrequestallhistory/{reqcode}")
+	public ResponseEntity<Apiresponse> getRequestAllHistory(@PathVariable("reqcode") String reqcode,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		List<CommentsHistory> allCommentHistory = this.requestService.getAllCommentByReqId(reqcode);
+		for (CommentsHistory ch : allCommentHistory) {
+			lstue.add(ch);
+		}
+		if (allCommentHistory != null) {
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Request History View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong in comment history");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	/* ===== Save New User PROCESS ===== */
-	@RequestMapping("/savenewuserprocess")
-	public String savenewuser(@Valid @ModelAttribute("userEntity") UserEntity userEntity, Errors errors,
-			HttpSession session, HttpServletResponse response) {
-		if ((session.getAttribute("username") == null)) {
-			System.out.println(session.getAttribute("username"));
-			return "redirect:/home/";
-		} else if ((!session.getAttribute("isUserAdmin").equals("admin"))
-				&& (!session.getAttribute("isUserAdmin").equals("supadmin"))) {
-			System.out.println("You are not a valid User!!");
-			session.setAttribute("message", new Message("You are not a valid User!!", "alert-danger"));
-			return "index";
-		} else {
-			try {
-				if (errors.hasErrors()) {
-					return "user/createuser";
-				} else {
-					long millis = System.currentTimeMillis();
-					java.sql.Date date = new java.sql.Date(millis);
-					Boolean userstatus = Boolean.valueOf(userEntity.isuIsActive());
-					userEntity.setuCDate(date);
-					userEntity.setuCBy((String) session.getAttribute("username"));
-					userEntity.setuIsActive(userstatus);
-					UserEntity isUserSave = this.userService.CreateNewUser(userEntity);
-					if (isUserSave != null) {
-						Map<String, Object> model = new HashMap<>();
-						model.put("UserCreateBy", session.getAttribute("username"));
-						model.put("NewUser", isUserSave.getuName());
-						model.put("NewPassword", isUserSave.getuPassword());
-						MailResponse emailw = service.sendNewUserEmail(isUserSave.getuEmail(), model);
-						session.setAttribute("message",
-								new Message("User Create Successfully !! New Username is  :  " + isUserSave.getuName(),
-										"alert-success"));
-						return "redirect:user/getalluser";
-					} else {
-						session.setAttribute("message",
-								new Message("Invalid Data Or Data Not Save !!", "alert-danger"));
-						return "user/createuser";
-					}
-				}
-			} catch (Exception e) {
-				session.setAttribute("message", new Message("Invalid Data Or Data Not Save  Catch!!", "alert-danger"));
-				errors.hasErrors();
-				return "user/createuser";
-			}
-		}
-	}
-
-	/* ======== Save list of Department user role ======== */
-	@PostMapping(path = "/saveuserrole")
-	public String SaveUserDeptRole(@RequestBody List<UserDeptEntity> userDeptEntity, HttpSession session,
+	/* ===== Dashboard Data========= */
+	@GetMapping("/dashboarddata")
+	public ResponseEntity<Apiresponse> updateRequest(Model model, HttpServletRequest request, HttpSession session,
 			HttpServletResponse response) {
-		System.out.println((int) session.getAttribute("userId"));
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
 
-		int DUDA = this.userDeptService.DeleteUserDeptAccess((int) session.getAttribute("userId"));
+		int noOfDepartment = this.userDeptService.noOfDepartment(userid);
+		int noOfUserInDepartment = this.userDeptService.noOfUserInDepartment(userid);
+		int noOfAssignedRequestInDepartment = this.requestService.noOfAssignedRequestInDepartment(userid);
+		int noOfRaisedRequestInDepartment = this.requestService.noOfRaisedRequestInDepartment(userid);
 
-		UserDeptEntity entity = null;
+		model.addAttribute("noOfDepartment", noOfDepartment);
+		model.addAttribute("noOfUserInDepartment", noOfUserInDepartment);
+		model.addAttribute("noOfAssignedRequestInDepartment", noOfAssignedRequestInDepartment);
+		model.addAttribute("noOfRaisedRequestInDepartment", noOfRaisedRequestInDepartment);
 
-		entity = this.userDeptService.saveUserDeptAccess(userDeptEntity);
-		System.out.println(DUDA);
-		if (DUDA > 0) {
-
-		}
-
-		if (entity != null) {
-			session.setAttribute("message",
-					new Message("User Role Successfully Save For!! :  " + entity.getUserid(), "alert-success"));
-			return "redirect:user/getalluser";
-		} else {
-			session.setAttribute("message", new Message("User Role in not Save !! :  ", "alert-danger"));
-			return "redirect:user/getalluser";
-		}
-
+		lstue.add(model);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("Request History View");
+		return ResponseEntity.ok().body(ar);
 	}
-
-	/* ======== Update user date PROCESS ======== */
-	@PostMapping("/updateusersprocess")
-	public String updateUser(@Valid @ModelAttribute("userEntity") UserEntity userEntity, Errors errors, Model model,
-			HttpServletRequest request, HttpServletResponse response) {
-		response.setHeader("Cache-Control", "no-cache,no-store,must-revalidate");
-		HttpSession session = request.getSession(false);
-		userEntity.setuId((int) session.getAttribute("userId"));
-		userEntity.setuCBy((String) session.getAttribute("oldcreby"));
-		userEntity.setuCDate((Date) session.getAttribute("oldcredt"));
-		if (userEntity.getuPassword() == null || userEntity.getuPassword().isEmpty()) {
-			userEntity.setuPassword((String) session.getAttribute("usercurrpass"));
-		}
-		this.userService.CreateNewUser(userEntity);
-		session.removeAttribute((String) session.getAttribute("userId").toString());
-		session.removeAttribute((String) session.getAttribute("userFname"));
-		session.removeAttribute((String) session.getAttribute("userfullname"));
-		session.removeAttribute((String) session.getAttribute("usercurrpass"));
-		session.removeAttribute((String) session.getAttribute("oldcreby").toString());
-		session.removeAttribute((String) session.getAttribute("oldcredt").toString());
-		return "redirect:user/getalluser";
-	}
-
-	/* ======== user data pdf generation process ======== */
-
-	@GetMapping("/users/export/pdf")
-	public void exportToPDF(HttpServletResponse response) throws DocumentException, IOException {
-		response.setContentType("application/pdf");
-		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-		String currentDateTime = dateFormatter.format(new Date());
-
-		String headerKey = "Content-Disposition";
-		String headerValue = "attachment; filename=users_" + currentDateTime + ".pdf";
-		response.setHeader(headerKey, headerValue);
-
-		List<UserEntity> listUsers = this.userService.getAllUser();
-
-		UserPDFExporter exporter = new UserPDFExporter(listUsers);
-		exporter.export(response);
-
-	}
-
-	/* ======== request raise pdf generation process ======== */
-	@GetMapping("user/viewrequest/export/pdf")
-	public void exportToPDF1(HttpServletResponse response, HttpSession session) throws DocumentException, IOException {
-		response.setContentType("application/pdf");
-		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-		String currentDateTime = dateFormatter.format(new Date());
-
-		String headerKey = "Content-Disposition";
-		String headerValue = "attachment; filename=raise request_" + currentDateTime + ".pdf";
-		response.setHeader(headerKey, headerValue);
-
-		List<StatusEntityview> allraisestatus = this.statusService
-				.getAllArrisedLastUpdateRequest((int) session.getAttribute("uid"));
-
-		RequestPDFExporter exporter = new RequestPDFExporter(allraisestatus);
-		exporter.export(response);
-
-	}
-
-	/* ======== assigned request pdf generation process ======== */
-	@GetMapping("user/viewrequest/export1/pdf")
-	public void exportToPDF2(HttpServletResponse response, HttpSession session) throws DocumentException, IOException {
-		response.setContentType("application/pdf");
-		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-		String currentDateTime = dateFormatter.format(new Date());
-
-		String headerKey = "Content-Disposition";
-		String headerValue = "attachment; filename=assigned request_" + currentDateTime + ".pdf";
-		response.setHeader(headerKey, headerValue);
-
-		List<StatusEntityview> allassignstatus = this.statusService
-				.getAllAssignLastUpdateRequest((int) session.getAttribute("uid"));
-
-		AssignRequestPDFExporter exporter = new AssignRequestPDFExporter(allassignstatus);
-		exporter.export(response);
-
-	}
-
-	/* ======== closed request pdf generation process ======== */
-	@GetMapping("user/viewrequest/export2/pdf")
-	public void exportToPDF3(HttpServletResponse response, HttpSession session) throws DocumentException, IOException {
-		response.setContentType("application/pdf");
-		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-		String currentDateTime = dateFormatter.format(new Date());
-
-		String headerKey = "Content-Disposition";
-		String headerValue = "attachment; filename=closed request_" + currentDateTime + ".pdf";
-		response.setHeader(headerKey, headerValue);
-
-		List<StatusEntityview> allarriseclosedstatus = this.statusService
-				.getAllArrisedClosedRequest((int) session.getAttribute("uid"));
-
-		ClosedRequestPDFExporter exporter = new ClosedRequestPDFExporter(allarriseclosedstatus);
-		exporter.export(response);
-
-	}
-
 }

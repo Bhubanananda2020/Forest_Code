@@ -75,23 +75,6 @@ public interface StatusRepo extends JpaRepository<StatusEntity, Integer> {
 	public List<Object[]> getAllRaisedLastUpdateRequestforadmin(@Param("uid") int uid);
 
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	/* ======== Get ALL ASSIGN LATEST Request By LOGIN Admin ID ======== */
 	@Query(value = "SELECT re.created_By,re.request_number,re.request_title, se.status_desc,\r\n"
 			+ "de.department_name,ue.user_first_name, re.assigned_to, \r\n"
@@ -107,7 +90,6 @@ public interface StatusRepo extends JpaRepository<StatusEntity, Integer> {
 			+ "where ud.user_id = :uid and ud.user_role = 'admin') and ud.user_role != 'no permission'\r\n"
 			+ "group by (ud.user_id)))) and se.status_desc != 'CLOSE REQUEST';", nativeQuery = true)
 	public List<Object[]> getAllAssignLastUpdateRequestforadmin(@Param("uid") int uid);
-
 	
 	
 	/* ======== Get ALL ARRISED CLOSED Request By LOGIN Admin ID ======== */
@@ -127,6 +109,40 @@ public interface StatusRepo extends JpaRepository<StatusEntity, Integer> {
 
 	
 	
+	
+	/* ==================================== Super Admin request view work ============================================ */
+		
+	
+
+	/* ======== Get ALL ARRISED LATEST Request FOR SUPER Admin ======== */
+	@Query(value = "SELECT re.created_By,re.request_number,re.request_title, se.status_desc,\r\n"
+			+ "de.department_name,ue.user_first_name, re.assigned_to,\r\n"
+			+ "se.created_date, re.severity, re.piority, DATEDIFF(se.created_date,re.assigned_date) FROM requests_entity re inner join status_entity se on  se.request_number = re.request_id\r\n"
+			+ "inner join user_entity ue on ue.user_id = re.assigned_to inner join dept_entity de on de.dept_code = re.request_dept\r\n"
+			+ "where se.status_id in(SELECT max(status_id) FROM requesttrackingsystemdb.status_entity\r\n"
+			+ "group by request_number)  and se.status_desc != 'CLOSE REQUEST';", nativeQuery = true)
+	public List<Object[]> getAllRaisedLastUpdateRequestforsuperadmin();
+
+	
+	/* ======== Get ALL ASSIGN LATEST Request FOR SUPER Admin ======== */
+	@Query(value = "SELECT re.created_By,re.request_number,re.request_title, se.status_desc,\r\n"
+			+ "de.department_name,ue.user_first_name, re.assigned_to,\r\n"
+			+ "se.created_date, re.severity, re.piority, DATEDIFF(se.created_date,re.assigned_date) FROM requests_entity re inner join status_entity se on  se.request_number = re.request_id\r\n"
+			+ "inner join user_entity ue on ue.user_id = re.assigned_to inner join dept_entity de on de.dept_code = re.request_dept\r\n"
+			+ "where se.status_id in(SELECT max(status_id) FROM requesttrackingsystemdb.status_entity\r\n"
+			+ "group by request_number)  and se.status_desc != 'CLOSE REQUEST';", nativeQuery = true)
+	public List<Object[]> getAllAssignLastUpdateRequestforsuperadmin();
+	
+	
+	/* ======== Get ALL ARRISED CLOSED Request FOR SUPER Admin ======== */
+	@Query(value = "SELECT re.created_By,re.request_number,re.request_title, se.status_desc,\r\n"
+			+ "de.department_name,ue.user_first_name, re.assigned_to,\r\n"
+			+ "se.created_date, re.severity, re.piority, DATEDIFF(se.created_date,re.assigned_date) FROM requests_entity re inner join status_entity se on  se.request_number = re.request_id\r\n"
+			+ "inner join user_entity ue on ue.user_id = re.assigned_to inner join dept_entity de on de.dept_code = re.request_dept\r\n"
+			+ "where se.status_id in(SELECT max(status_id) FROM requesttrackingsystemdb.status_entity\r\n"
+			+ "group by request_number)  and se.status_desc = 'CLOSE REQUEST';", nativeQuery = true)
+	public List<Object[]> getAllRaisedClosedRequestforsuperadmin();
+
 	
 	
 	

@@ -2,18 +2,17 @@ package com.crts.service;
 
 import java.util.List;
 
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
+import com.crts.entity.DeptEntity;
 import com.crts.entity.UserDeptEntity;
-import com.crts.entity.UserEntity;
 
 
 @Service
 public interface UserDeptService {
 
 	/* ========== Save list of Department user role ================ */
-	public UserDeptEntity saveUserDeptAccess(List<UserDeptEntity> ude);
+	public UserDeptEntity saveUserDeptAccess(List<UserDeptEntity> ude,int userid);
 
 	/* ========== Delete list of Department user role ================ */
 	public int DeleteUserDeptAccess(int uId);
@@ -32,7 +31,7 @@ public interface UserDeptService {
 	public int noOfUserInDepartment(int uid);
 	
 	
-	public List<String> AllAdminDepartment(int uid);
+	public List<DeptEntity> AllAdminDepartment(int uid);
 	public List<String> AllSupAdminDepartment();
 	
 	public List<UserDeptEntity> getAllRollByUserId(int userid);

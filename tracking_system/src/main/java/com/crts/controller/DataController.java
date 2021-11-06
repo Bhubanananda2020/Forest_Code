@@ -25,7 +25,6 @@ import com.crts.service.UserService;
 
 @RestController
 @RequestMapping("/getdata")
-@CrossOrigin("*")
 public class DataController {
 
 	@Autowired
@@ -163,11 +162,11 @@ public class DataController {
 	}
 		
 	
+	@GetMapping("/getAll")
+	public List<UserEntity> getAllUsers() {
+		return this.userService.getAllUser();
+	}
 	
-	
-	
-	
-	
-	
+
 
 }

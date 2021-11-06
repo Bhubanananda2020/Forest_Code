@@ -15,14 +15,6 @@ public interface DeptRepo extends JpaRepository<DeptEntity, Integer> {
 	/* ============ GET ALL PARENT DEPARTMENT CODE ============ */
 	@Query("select DISTINCT depcode from DeptEntity")
 	public List<String> getAllDeptEntityParentCode();
-
-	
-	
-	
-	
-	
-	
-	
 	
 	/* ============ GET ALL PARENT DEPARTMENT CODE By UserId ============ */
 	@Query(value = "SELECT parent_department_code FROM dept_entity\r\n"
@@ -53,6 +45,12 @@ public interface DeptRepo extends JpaRepository<DeptEntity, Integer> {
 			+ "(SELECT parent_department_code FROM user_dept ud inner join dept_entity de on de.Dept_id=ud.Dept_id \r\n"
 			+ "where ud.user_id = :uId and ud.user_role = 'admin');", nativeQuery = true)
 	public List<DeptEntity> getAllDeptAdmin(@Param("uId") int uId);
+	
+	@Query(value = "SELECT * FROM dept_entity WHERE dept_code= :deptcode", nativeQuery = true)
+	public DeptEntity getDeptByDeptCode(@Param("deptcode") String deptcode);
+	
+	
+	
 	
 	
 	

@@ -217,4 +217,94 @@ public class StatusServiceImpl implements StatusService {
 		return allassignstatusadmin;
 	}
 
+	
+
+	/* ==================================== Super Admin request view work ============================================ */
+	
+	/* ======== Get ALL ARRISED LATEST Request By LOGIN Admin ID ======== */
+	public List<StatusEntityview> getAllRaisedLastUpdateRequestforsuperadmin() {
+		List<Object[]> allstatusadmin1 = this.statusRepo.getAllRaisedLastUpdateRequestforsuperadmin();
+		List<StatusEntityview> allarrisestatusadmin = new ArrayList<StatusEntityview>();
+		for (Object[] obj1 : allstatusadmin1) {
+			int createdBy = (int) obj1[0];
+			String reqcode = ((String) obj1[1]);
+			String reqtitle = ((String) obj1[2]);
+			String status_desc = ((String) obj1[3]);
+			String deptname = ((String) obj1[4]);
+			String firstname = ((String) obj1[5]);
+			int reqassignto = (int) (obj1[6]);
+			Date date = (Date) obj1[7];
+			int severity1 = (int) (obj1[8]);
+			int piority1 = (int) (obj1[9]);
+			int age;
+			if ((BigInteger) obj1[10] != null) {
+				BigInteger age21 = (BigInteger) obj1[10];
+				age = age21.intValue();
+			} else {
+				age = 0;
+			}			
+			StatusEntityview ue1 = new StatusEntityview(createdBy, reqcode, reqtitle, status_desc, deptname, firstname, reqassignto, date, severity1, piority1, age);
+			allarrisestatusadmin.add(ue1);
+		}
+		return allarrisestatusadmin;
+	}
+
+	
+	/* ======== Get ALL ASSIGN LATEST Request By LOGIN Admin ID ======== */
+	public List<StatusEntityview> getAllAssignLastUpdateRequestforsuperadmin() {
+		List<Object[]> allstatusadmin2 = this.statusRepo.getAllAssignLastUpdateRequestforsuperadmin();
+		List<StatusEntityview> allassignstatusadmin = new ArrayList<StatusEntityview>();
+		for (Object[] obj2 : allstatusadmin2) {
+			int createdBy = (int) obj2[0];
+			String reqcode = ((String) obj2[1]);
+			String reqtitle = ((String) obj2[2]);
+			String status_desc = ((String) obj2[3]);
+			String deptname = ((String) obj2[4]);
+			String firstname = ((String) obj2[5]);
+			int reqassignto = (int) (obj2[6]);
+			Date date = (Date) obj2[7];
+			int severity1 = (int) (obj2[8]);
+			int piority1 = (int) (obj2[9]);
+			int age;
+			if ((BigInteger) obj2[10] != null) {
+				BigInteger age21 = (BigInteger) obj2[10];
+				age = age21.intValue();
+			} else {
+				age = 0;
+			}			
+			StatusEntityview ue2 = new StatusEntityview(createdBy, reqcode, reqtitle, status_desc, deptname, firstname, reqassignto, date, severity1, piority1, age);
+			allassignstatusadmin.add(ue2);
+		}
+		return allassignstatusadmin;
+	}
+
+	/* ======== Get ALL ARRISED CLOSED Request By LOGIN Admin ID ======== */
+	public List<StatusEntityview> getAllRaisedClosedRequestforsuperadmin() {
+		List<Object[]> allstatusadmin3 = this.statusRepo.getAllRaisedClosedRequestforsuperadmin();
+		List<StatusEntityview> allassignstatusadmin = new ArrayList<StatusEntityview>();
+		for (Object[] obj3 : allstatusadmin3) {
+			int createdBy = (int) obj3[0];
+			String reqcode = ((String) obj3[1]);
+			String reqtitle = ((String) obj3[2]);
+			String status_desc = ((String) obj3[3]);
+			String deptname = ((String) obj3[4]);
+			String firstname = ((String) obj3[5]);
+			int reqassignto = (int) (obj3[6]);
+			Date date = (Date) obj3[7];
+			int severity1 = (int) (obj3[8]);
+			int piority1 = (int) (obj3[9]);
+			int age;
+			if ((BigInteger) obj3[10] != null) {
+				BigInteger age21 = (BigInteger) obj3[10];
+				age = age21.intValue();
+			} else {
+				age = 0;
+			}			
+			StatusEntityview ue3 = new StatusEntityview(createdBy, reqcode, reqtitle, status_desc, deptname, firstname, reqassignto, date, severity1, piority1, age);
+			allassignstatusadmin.add(ue3);
+		}
+		return allassignstatusadmin;
+	}
+
+
 }

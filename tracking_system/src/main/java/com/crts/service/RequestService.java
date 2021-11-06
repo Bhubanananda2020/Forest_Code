@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.crts.entity.CommentsHistory;
 import com.crts.entity.RequestEntity;
+import com.crts.entity.StatusEntity;
 
 @Service
 public interface RequestService {
@@ -17,15 +18,14 @@ public interface RequestService {
 	
 	
 	/* ======== Save Request ======== */
-	public boolean saveRequest(String reqtitle,String reqdesc, String reqtodepart, String getNewRequestNum,
-			int reqtoperson,String reqfstcomment,int createby, int piority, int severity);
+	public RequestEntity saveRequest(RequestEntity requestEntity);
 
 	
 	/* ======== Get Request By Request Code ======== */
 	public RequestEntity getRequestByReqcode(String rcode);
 
 	/* ======== Update Request ======== */
-	public RequestEntity updateRequest(RequestEntity re);
+	public RequestEntity updateRequest(RequestEntity re, StatusEntity se, int userid);
 
 	/* ===== Get All comments By Request Id and user id ===== */
 	public List<CommentsHistory> getAllCommentByReqId(String reqnum);
