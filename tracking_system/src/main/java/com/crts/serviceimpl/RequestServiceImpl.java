@@ -109,11 +109,10 @@ public class RequestServiceImpl implements RequestService {
 	public RequestEntity updateRequest(RequestEntity re, StatusEntity se, int userid) {
 		RequestEntity rereturn = new RequestEntity();
 		try {
-			RequestEntity oldRequestEntity = this.requestService.getRequestByReqcode(re.getReqcode());
 
+			RequestEntity oldRequestEntity = this.requestService.getRequestByReqcode(re.getReqcode());
 			long millis = System.currentTimeMillis();
 			java.sql.Date date = new java.sql.Date(millis);
-
 			CommentsEntity ce = new CommentsEntity();
 			ce.setCmdesc(re.getReqinicomment());
 			ce.setCmreqdate(date);
@@ -136,7 +135,7 @@ public class RequestServiceImpl implements RequestService {
 			re.setReqinicomment(oldRequestEntity.getReqinicomment());
 			re.setRecreatedby(oldRequestEntity.getRecreatedby());
 			re.setStatusEntity(selist);
-			re.setcCommentsEntity(celist);
+			re.setCCommentsEntity(celist);
 			se.setRequestEntity(re);
 			ce.setRequestEntity(re);
 
@@ -153,17 +152,13 @@ public class RequestServiceImpl implements RequestService {
 					System.out.println("Mail sent " + senderId.getuEmail());
 				}
 				return rereturn;
-			}
-			else
-			{
+			} else {
 				return null;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
-
-
 	}
 
 	/* ===== Get All comments By Request Id and user id ===== */

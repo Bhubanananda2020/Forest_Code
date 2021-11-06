@@ -1,15 +1,14 @@
 package com.crts.controller;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,13 +26,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.crts.dto.RequestDTO;
-import com.crts.entity.CommentsEntity;
+import com.crts.entity.CommentsHistory;
 import com.crts.entity.DeptEntity;
 import com.crts.entity.MailResponse;
 import com.crts.entity.RequestEntity;
+import com.crts.entity.ResponseDept;
 import com.crts.entity.StatusEntity;
 import com.crts.entity.StatusEntityview;
+import com.crts.entity.UserDeptEntity;
 import com.crts.entity.UserEntity;
 import com.crts.helper.JwtUtilHelper;
 import com.crts.response.Apiresponse;
@@ -84,7 +83,6 @@ public class HomeController {
 		try {
 			UserEntity isValidUser = this.userService.userValidate(userEntity.getuName(), userEntity.getuPassword());
 			lstue.add(isValidUser);
-
 			if (isValidUser != null) {
 				UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(userEntity.getuName());
 				responseHeaders.add("authorization", this.jwtUtilHelper.generateToken(userDetails));
@@ -98,7 +96,7 @@ public class HomeController {
 			} else {
 				ar.setObj(null);
 				ar.setStatus(HttpStatus.UNAUTHORIZED);
-				ar.setMessage("Login Fail, Unauthorized user");
+				ar.setMessage("Login Failed, Unauthorized user");
 				return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 			}
 		} catch (Exception e) {
@@ -142,19 +140,19 @@ public class HomeController {
 				} else {
 					ar.setObj(null);
 					ar.setStatus(HttpStatus.BAD_REQUEST);
-					ar.setMessage("Something went wronge");
+					ar.setMessage("Something went wrong");
 					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 				}
 			} catch (Exception e) {
 				ar.setObj(null);
 				ar.setStatus(HttpStatus.BAD_REQUEST);
-				ar.setMessage("Something went wronge");
+				ar.setMessage("Something went wrong");
 				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 			}
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.UNAUTHORIZED);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 	}
@@ -197,15 +195,15 @@ public class HomeController {
 	}
 
 	/* ===== GET USER BY ID PAGE ========= */
-	@GetMapping("/{uname}/getuser")
-	public ResponseEntity<Apiresponse> GetUserByUname(@PathVariable("uname") String uname, HttpSession session,
+	@GetMapping("/getuser/{uName}")
+	public ResponseEntity<Apiresponse> GetUserByUname(@PathVariable("uName") String uName, HttpSession session,
 			HttpServletRequest request, HttpServletResponse response) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
 		String userrole = request.getHeader("userrole");
 		int userid = Integer.parseInt(request.getHeader("userid"));
 		if (userrole.equals("supadmin") || userrole.equals("admin")) {
-			UserEntity user = this.userService.validatingUserNameOrEmailid(uname);
+			UserEntity user = this.userService.validatingUserNameOrEmailid(uName);
 			lstue.add(user);
 			ar.setObj(lstue);
 			ar.setStatus(HttpStatus.OK);
@@ -275,7 +273,7 @@ public class HomeController {
 			} else {
 				ar.setObj(null);
 				ar.setStatus(HttpStatus.BAD_REQUEST);
-				ar.setMessage("Something Went wronge");
+				ar.setMessage("Something Went wrong");
 				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 			}
 		} else {
@@ -339,6 +337,39 @@ public class HomeController {
 
 	}
 
+	
+	@GetMapping("/getalldeptpermissionforuser/{uid}")
+	public List<UserDeptEntity> getAllDeptpermission(@PathVariable("uid") int uid) {
+		List<UserDeptEntity> list = this.userDeptService.getAllRollByUserId(uid);
+		return list;
+	}
+	
+	
+	
+	/* ======== Save list of Department user role ======== */
+	@PostMapping(path = "/saveuserrole")
+	public ResponseEntity<Apiresponse> SaveUserDeptRole(@RequestBody List<UserDeptEntity> userDeptEntity,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
+
+		System.out.println(userDeptEntity);
+
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+//		int DUDA = this.userDeptService.DeleteUserDeptAccess((int) session.getAttribute("userId"));
+
+		UserDeptEntity entity = null;
+		entity = this.userDeptService.saveUserDeptAccess(userDeptEntity, userid);
+
+		lstue.add(null);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("Password reset !! New Password has been sent to the provided Email Address");
+		return ResponseEntity.ok().body(ar);
+	}
+
 	/* ===== SELECT DEPARTMENT PAGE ========= */
 	@GetMapping("/selectdepartment")
 	public ResponseEntity<Apiresponse> selectdepartment(HttpSession session, HttpServletRequest request,
@@ -350,14 +381,15 @@ public class HomeController {
 		int userid = Integer.parseInt(request.getHeader("userid"));
 
 		if (userrole.equals("supadmin")) {
-			List<String> allAdminDepartment = this.userDeptService.AllSupAdminDepartment();
+			List<DeptEntity> allAdminDepartment = this.deptService.getAllDept();
 			lstue.add(allAdminDepartment);
 			ar.setObj(lstue);
 			ar.setStatus(HttpStatus.OK);
 			ar.setMessage("Select Department for Super Admin Successfully");
 			return ResponseEntity.ok().body(ar);
 		} else if (userrole.equals("admin")) {
-			List<String> allAdminDepartment = this.userDeptService.AllAdminDepartment(userid);
+
+			List<DeptEntity> allAdminDepartment = this.userDeptService.AllAdminDepartment(userid);
 			lstue.add(allAdminDepartment);
 			ar.setObj(lstue);
 			ar.setStatus(HttpStatus.OK);
@@ -366,7 +398,7 @@ public class HomeController {
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.UNAUTHORIZED);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.UNAUTHORIZED);
 		}
 	}
@@ -375,6 +407,10 @@ public class HomeController {
 	@PostMapping("/createdept")
 	public ResponseEntity<Apiresponse> savedept(@RequestBody DeptEntity deptEntity, HttpSession session,
 			HttpServletRequest request, HttpServletResponse response) {
+
+		System.out.println();
+		System.out.println(deptEntity);
+		System.out.println();
 
 		Apiresponse ar = new Apiresponse();
 		DeptEntity isDepartmentSave = new DeptEntity();
@@ -385,9 +421,10 @@ public class HomeController {
 
 		if (userrole.equals("supadmin")) {
 			boolean flagcheck = false;
-			List<String> list = this.userDeptService.AllSupAdminDepartment();
-			for (String alldept : list) {
-				if (alldept.equalsIgnoreCase(deptEntity.getDepcode())) {
+			List<DeptEntity> list = this.deptService.getAllDept();
+
+			for (DeptEntity alldept : list) {
+				if (alldept.getDecode().equalsIgnoreCase(deptEntity.getDepcode())) {
 					flagcheck = true;
 				}
 			}
@@ -402,7 +439,7 @@ public class HomeController {
 				} else {
 					ar.setObj(null);
 					ar.setStatus(HttpStatus.BAD_REQUEST);
-					ar.setMessage("Something went wronge");
+					ar.setMessage("Something went wrong");
 					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 				}
 			} else if (deptEntity.getDecode().equalsIgnoreCase(deptEntity.getDepcode())) {
@@ -416,10 +453,11 @@ public class HomeController {
 				} else {
 					ar.setObj(null);
 					ar.setStatus(HttpStatus.BAD_REQUEST);
-					ar.setMessage("Something went wronge");
+					ar.setMessage("Something went wrong");
 					return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 				}
 			} else {
+				System.out.println("3");
 				ar.setObj(null);
 				ar.setStatus(HttpStatus.BAD_REQUEST);
 				ar.setMessage("Invalid Data, Department Not Save !!");
@@ -436,7 +474,7 @@ public class HomeController {
 			} else {
 				ar.setObj(null);
 				ar.setStatus(HttpStatus.BAD_REQUEST);
-				ar.setMessage("Something went wronge");
+				ar.setMessage("Something went wrong");
 				return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 			}
 		} else {
@@ -477,9 +515,78 @@ public class HomeController {
 		}
 	}
 
-	/* ===== Generate New Request PROCESS ===== */
+	/* ===== GET ALL DEPARTMENT CODE LIST ========= */
+	@GetMapping("/getalldepartmentcodelist")
+	public ResponseEntity<Apiresponse> getAllDepartmentCodeList(HttpSession session, HttpServletRequest request,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		List<String> deptCodeList = this.deptService.getAllDeptCode();
+		if (deptCodeList != null) {
+			lstue.add(deptCodeList);
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("gettting the Department code List Successfully !!");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== Get User By DeptID ===== */
+	@GetMapping("/getuserbydeptcode/{deptcode}")
+	public ResponseEntity<Apiresponse> getUserByDeptID(@PathVariable("deptcode") String deptcode,
+			HttpServletRequest request) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		int a = this.deptService.getDeptIDByDeptCode(deptcode);
+		List<Object[]> list = this.userDeptService.getAllUserByDeptid(a);
+		List<UserEntity> ue = new ArrayList<UserEntity>();
+
+		for (Object[] obj : list) {
+			int id = (int) obj[0];
+			String name = (String) obj[1];
+			String role = ((String) obj[2]);
+			if (!role.equalsIgnoreCase("no permission")) {
+				UserEntity ue1 = new UserEntity(id, name);
+				ue.add(ue1);
+			}
+		}
+		lstue.add(ue);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("gettting the User List Successfully !!");
+		return ResponseEntity.ok().body(ar);
+
+	}
+
+	/* ===== Get Dept By Deptcode ===== */
+	@GetMapping("/getdeptbydeptcode/{deptcode}")
+	public ResponseEntity<Apiresponse> getDeptByDeptCode(@PathVariable("deptcode") String deptcode,
+			HttpServletRequest request) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		DeptEntity deptEntity = this.deptService.getDeptByDeptCode(deptcode);		
+		lstue.add(deptEntity);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("gettting the User List Successfully !!");
+		return ResponseEntity.ok().body(ar);
+	}
+
+	/* ===== Generate New Request ===== */
 	@PostMapping("/generaterequest")
-	public ResponseEntity<Apiresponse> saveRequest(@Valid @RequestBody RequestEntity requestEntity, HttpSession session,
+	public ResponseEntity<Apiresponse> saveRequest(@RequestBody RequestEntity requestEntity, HttpSession session,
 			HttpServletRequest request, HttpServletResponse response) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
@@ -489,7 +596,6 @@ public class HomeController {
 				+ this.requestService.getLastRequestNumberByDeptId(requestEntity.getReqdeptcode());
 		requestEntity.setRecreatedby(userid);
 		requestEntity.setReqcode(getNewRequestNum);
-
 		RequestEntity isRequestSave = this.requestService.saveRequest(requestEntity);
 		if (isRequestSave != null) {
 			UserEntity uedata = this.userService.getById(requestEntity.getReqassignto());
@@ -510,11 +616,13 @@ public class HomeController {
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong,Please try again !!");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
 
+	
+	
 	/* ===== VIEW REQUEST PAGE Super admin allarrisestatus ========= */
 	@GetMapping("/viewallrequest/allarrisestatus")
 	public ResponseEntity<Apiresponse> viewallreqallarrisestatus(HttpServletRequest request, HttpSession session,
@@ -540,7 +648,7 @@ public class HomeController {
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -571,7 +679,7 @@ public class HomeController {
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -602,7 +710,7 @@ public class HomeController {
 		} else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -641,7 +749,7 @@ public class HomeController {
 		else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -680,7 +788,7 @@ public class HomeController {
 		else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -719,7 +827,7 @@ public class HomeController {
 		else {
 			ar.setObj(null);
 			ar.setStatus(HttpStatus.BAD_REQUEST);
-			ar.setMessage("Something went wronge");
+			ar.setMessage("Something went wrong");
 			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -752,11 +860,17 @@ public class HomeController {
 		}
 	}
 
+	
+	
+	
+	
+	
+	
+	
 	/* ===== MODIFY REQUEST PROCESS========= */
 	@PostMapping("/updaterequest")
-	public ResponseEntity<Apiresponse> updateRequest(@Valid RequestEntity requestEntity, HttpServletRequest request,
-			HttpSession session, HttpServletResponse response) {
-
+	public ResponseEntity<Apiresponse> updateRequest(@RequestBody RequestEntity requestEntity,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
 		Apiresponse ar = new Apiresponse();
 		ArrayList<Object> lstue = new ArrayList<Object>();
 		String userrole = request.getHeader("userrole");
@@ -781,4 +895,54 @@ public class HomeController {
 
 	}
 
+	/* ===== Get REQUEST Comment History========= */
+	@GetMapping("getrequestallhistory/{reqcode}")
+	public ResponseEntity<Apiresponse> getRequestAllHistory(@PathVariable("reqcode") String reqcode,
+			HttpServletRequest request, HttpSession session, HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+		List<CommentsHistory> allCommentHistory = this.requestService.getAllCommentByReqId(reqcode);
+		for (CommentsHistory ch : allCommentHistory) {
+			lstue.add(ch);
+		}
+		if (allCommentHistory != null) {
+			ar.setObj(lstue);
+			ar.setStatus(HttpStatus.OK);
+			ar.setMessage("Request History View");
+			return ResponseEntity.ok().body(ar);
+		} else {
+			ar.setObj(null);
+			ar.setStatus(HttpStatus.BAD_REQUEST);
+			ar.setMessage("Something went wrong in comment history");
+			return new ResponseEntity<Apiresponse>(ar, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/* ===== Dashboard Data========= */
+	@GetMapping("/dashboarddata")
+	public ResponseEntity<Apiresponse> updateRequest(Model model, HttpServletRequest request, HttpSession session,
+			HttpServletResponse response) {
+		Apiresponse ar = new Apiresponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+		String userrole = request.getHeader("userrole");
+		int userid = Integer.parseInt(request.getHeader("userid"));
+
+		int noOfDepartment = this.userDeptService.noOfDepartment(userid);
+		int noOfUserInDepartment = this.userDeptService.noOfUserInDepartment(userid);
+		int noOfAssignedRequestInDepartment = this.requestService.noOfAssignedRequestInDepartment(userid);
+		int noOfRaisedRequestInDepartment = this.requestService.noOfRaisedRequestInDepartment(userid);
+
+		model.addAttribute("noOfDepartment", noOfDepartment);
+		model.addAttribute("noOfUserInDepartment", noOfUserInDepartment);
+		model.addAttribute("noOfAssignedRequestInDepartment", noOfAssignedRequestInDepartment);
+		model.addAttribute("noOfRaisedRequestInDepartment", noOfRaisedRequestInDepartment);
+
+		lstue.add(model);
+		ar.setObj(lstue);
+		ar.setStatus(HttpStatus.OK);
+		ar.setMessage("Request History View");
+		return ResponseEntity.ok().body(ar);
+	}
 }

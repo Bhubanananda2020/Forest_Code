@@ -1,6 +1,9 @@
 package com.forest_code.controller;
 
+import java.util.ArrayList;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,22 +41,28 @@ public class JwtController {
 	public ResponseEntity<JwtResponse> generateToken(@RequestBody JwtRequest jwtRequest) throws Exception {
 		System.out.println(jwtRequest);
 		JwtResponse jr = new JwtResponse();
+		ArrayList<Object> lstue = new ArrayList<Object>();
+
+		HttpHeaders responseHeaders = new HttpHeaders();
 		try {
 			System.out.println("===============>");
 			Authentication authenticate = this.authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(jwtRequest.getUsername(), jwtRequest.getPassword()));
 			System.out.println(authenticate.getPrincipal().toString());
-			
+
 			UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(jwtRequest.getUsername());
-			String token = this.jwtUtilHelper.generateToken(userDetails);
-			jr.setToken(token);
 			
-			
-			return new ResponseEntity<JwtResponse>(jr, HttpStatus.OK);
-			
-			
-			
-			
+			lstue.add(userDetails);
+			jr.setToken(this.jwtUtilHelper.generateToken(userDetails));
+
+			responseHeaders.add("authorization", this.jwtUtilHelper.generateToken(userDetails));
+			responseHeaders.add("Access-Control-Expose-Headers", "authorization");
+
+			jr.setObj(null);
+			jr.setStatus(HttpStatus.OK);
+			jr.setMessage("Login Successfully");
+			return ResponseEntity.ok().headers(responseHeaders).body(jr);
+
 		} catch (UsernameNotFoundException e) {
 			e.printStackTrace();
 			throw new Exception("UsernameNotFound");

@@ -19,6 +19,8 @@ public interface EmployeeService {
 	public EmployeeEntity updateEmployeeByUserName(EmployeeEntity ee);
 	
 	public int deleteEmployeeByUserName(String eusername);
+
+	public List<EmployeeEntity> saveAndUpdateAllEmployee(List<EmployeeEntity> lstee);
 	
 
 	

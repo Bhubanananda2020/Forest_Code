@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-TrackingSystemApplication<tracking_system>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.crts.TrackingSystemApplication",
+            "projectName": "tracking_system",
+            "args": ""
+        }
+    ]
+}

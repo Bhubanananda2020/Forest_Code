@@ -47,5 +47,9 @@ public interface DeptService {
 	public DeptEntity getBydeid(int deid);
 	
 	
+	/* ============ GET DEPARTMENT BY DEPARTMENT ID ============ */	
+	public DeptEntity getDeptByDeptCode(String deptcode);
+	
+	
 	
 }

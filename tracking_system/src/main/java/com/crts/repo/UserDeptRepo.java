@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.crts.entity.DeptEntity;
+import com.crts.entity.ResponseDept;
 import com.crts.entity.UserDeptEntity;
 
 public interface UserDeptRepo extends JpaRepository<UserDeptEntity, Integer> {
@@ -44,16 +46,15 @@ public interface UserDeptRepo extends JpaRepository<UserDeptEntity, Integer> {
 	
 	
 	/* ========= Get All admin department by user id===============*/	
-	@Query(value = "SELECT de.dept_code FROM user_dept ud \r\n"
-			+ "inner join dept_entity de on de.Dept_id = ud.Dept_id\r\n"
-			+ "where ud.user_id = :userid  and ud.user_role = 'admin';", nativeQuery = true)
-	public List<String> AllAdminDepartment(int userid);
+	@Query(value = "select * from dept_entity\r\n"
+			+ "where Dept_id in (SELECT Dept_id FROM requesttrackingsystemdb.user_dept where user_id = :userid and user_role = 'admin');", nativeQuery = true)
+	public List<Object[]> AllAdminDepartment(int userid);
 
 	
 	
 	
 	/* ========= Get All super admin department by user id===============*/	
-	@Query(value = "SELECT DE.dept_code FROM dept_entity de", nativeQuery = true)
+	@Query(value = "SELECT * FROM dept_entity de", nativeQuery = true)
 	public List<String> AllSupAdminDepartment();
 	
 	

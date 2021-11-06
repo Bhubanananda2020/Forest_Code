@@ -82,4 +82,9 @@ public class DeptServiceImpl implements DeptService {
 		return this.deptRepo.getAllDeptAdmin(uId);
 	}
 
+	@Override
+	public DeptEntity getDeptByDeptCode(String deptcode) {
+		return this.deptRepo.getDeptByDeptCode(deptcode);
+	}
+
 }
